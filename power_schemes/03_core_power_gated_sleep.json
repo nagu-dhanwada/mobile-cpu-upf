@@ -1,0 +1,98 @@
+{
+  "name": "core_power_gated_sleep",
+  "description": "Always-on controller with switched CPU and memory domains for deep sleep.",
+  "upf_version": "2.1",
+  "top": "mobile_cpu_top",
+  "notes": [
+    "The always-on domain keeps the power controller and clock gates alive.",
+    "The CPU domain retains architectural register state before deep sleep.",
+    "The memory domain is switched off in deep sleep in this toy flow."
+  ],
+  "domains": [
+    {
+      "name": "PD_AON",
+      "elements": ["u_power_controller", "u_core_clk_gate", "u_mem_clk_gate"],
+      "supply": "VDD_AON",
+      "ground": "VSS",
+      "always_on": true,
+      "states": [
+        {"name": "ON", "kind": "FULL_ON", "voltage": 0.80}
+      ]
+    },
+    {
+      "name": "PD_CPU",
+      "elements": ["u_fetch", "u_decode", "u_regfile", "u_execute"],
+      "supply": "VDD_CPU",
+      "ground": "VSS",
+      "states": [
+        {"name": "ON", "kind": "FULL_ON", "voltage": 0.80},
+        {"name": "OFF", "kind": "OFF"}
+      ],
+      "switch": {
+        "name": "SW_CPU",
+        "input_supply": "VDD_AON",
+        "control": "cpu_power_gate_n",
+        "on_when": "CTRL",
+        "off_when": "!CTRL"
+      },
+      "isolation": {
+        "name": "ISO_CPU",
+        "applies_to": "outputs",
+        "signal": "iso_core",
+        "sense": "high",
+        "clamp": 0,
+        "location": "parent"
+      },
+      "retention": {
+        "name": "RET_CPU_REGS",
+        "elements": ["u_regfile"],
+        "save_signal": "ret_save",
+        "restore_signal": "ret_restore",
+        "retention_supply": "VDD_AON",
+        "ground": "VSS"
+      }
+    },
+    {
+      "name": "PD_MEM",
+      "elements": ["u_icache", "u_dmem"],
+      "supply": "VDD_MEM",
+      "ground": "VSS",
+      "states": [
+        {"name": "ON", "kind": "FULL_ON", "voltage": 0.80},
+        {"name": "OFF", "kind": "OFF"}
+      ],
+      "switch": {
+        "name": "SW_MEM",
+        "input_supply": "VDD_AON",
+        "control": "mem_power_gate_n",
+        "on_when": "CTRL",
+        "off_when": "!CTRL"
+      },
+      "isolation": {
+        "name": "ISO_MEM",
+        "applies_to": "outputs",
+        "signal": "iso_mem",
+        "sense": "high",
+        "clamp": 0,
+        "location": "parent"
+      }
+    }
+  ],
+  "level_shifters": [
+    {"name": "LS_CPU_TO_AON", "domain": "PD_CPU", "applies_to": "outputs", "rule": "both", "location": "parent"},
+    {"name": "LS_MEM_TO_CPU", "domain": "PD_MEM", "applies_to": "both", "rule": "both", "location": "parent"}
+  ],
+  "power_states": [
+    {"name": "RUN", "domain_states": {"PD_AON": "ON", "PD_CPU": "ON", "PD_MEM": "ON"}},
+    {"name": "LIGHT_SLEEP", "domain_states": {"PD_AON": "ON", "PD_CPU": "ON", "PD_MEM": "ON"}},
+    {"name": "DEEP_SLEEP", "domain_states": {"PD_AON": "ON", "PD_CPU": "OFF", "PD_MEM": "OFF"}}
+  ],
+  "estimation": {
+    "frequency_mhz": 900,
+    "clock_gating_efficiency": 0.55,
+    "state_mix": {"RUN": 0.35, "LIGHT_SLEEP": 0.45, "DEEP_SLEEP": 0.20},
+    "activity_by_power_state": {"RUN": 1.0, "LIGHT_SLEEP": 0.05, "DEEP_SLEEP": 0.0},
+    "retention_overhead_mw": 0.35
+  }
+}
+

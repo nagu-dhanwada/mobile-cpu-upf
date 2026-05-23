@@ -1,0 +1,35 @@
+{
+  "name": "clock_gated_idle",
+  "description": "Always-on CPU domain with aggressive RTL clock gating during idle.",
+  "upf_version": "2.1",
+  "top": "mobile_cpu_top",
+  "notes": [
+    "UPF still has one always-on domain because this scheme targets dynamic power through clock enables.",
+    "The clock-gating controls are core_clk_en and mem_clk_en in u_power_controller."
+  ],
+  "domains": [
+    {
+      "name": "PD_TOP",
+      "elements": ["."],
+      "include_scope": true,
+      "supply": "VDD_TOP",
+      "ground": "VSS",
+      "always_on": true,
+      "states": [
+        {"name": "ON", "kind": "FULL_ON", "voltage": 0.80}
+      ]
+    }
+  ],
+  "power_states": [
+    {"name": "RUN", "domain_states": {"PD_TOP": "ON"}},
+    {"name": "IDLE", "domain_states": {"PD_TOP": "ON"}}
+  ],
+  "estimation": {
+    "frequency_mhz": 900,
+    "clock_gating_efficiency": 0.48,
+    "state_mix": {"RUN": 0.45, "IDLE": 0.55},
+    "activity_by_power_state": {"RUN": 1.0, "IDLE": 0.18},
+    "retention_overhead_mw": 0.0
+  }
+}
+

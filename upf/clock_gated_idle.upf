@@ -1,0 +1,29 @@
+# Generated from power_schemes/02_clock_gated_idle.json
+# Scheme: clock_gated_idle
+# Always-on CPU domain with aggressive RTL clock gating during idle.
+# Regenerate with: python3 tools/gen_upf.py --schemes power_schemes --out upf
+
+upf_version 2.1
+set_design_top mobile_cpu_top
+
+# Note: UPF still has one always-on domain because this scheme targets dynamic power through clock enables.
+# Note: The clock-gating controls are core_clk_en and mem_clk_en in u_power_controller.
+
+# Supply ports and nets
+create_supply_port VDD_TOP
+create_supply_net VDD_TOP
+connect_supply_net VDD_TOP -ports VDD_TOP
+create_supply_port VSS
+create_supply_net VSS
+connect_supply_net VSS -ports VSS
+
+# Power domains and supply sets
+create_power_domain PD_TOP -include_scope
+create_supply_set SS_TOP -function {power VDD_TOP} -function {ground VSS}
+set_domain_supply_net PD_TOP -primary_power_net VDD_TOP -primary_ground_net VSS
+add_power_state SS_TOP -state ON -supply_expr {power == `{FULL_ON, 0.8} && ground == `{FULL_ON, 0}}
+
+# System power state table
+create_pst PST_CLOCK_GATED_IDLE -supplies {VDD_TOP}
+add_pst_state RUN -pst PST_CLOCK_GATED_IDLE -state {ON}
+add_pst_state IDLE -pst PST_CLOCK_GATED_IDLE -state {ON}

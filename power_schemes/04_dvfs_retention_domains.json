@@ -1,0 +1,110 @@
+{
+  "name": "dvfs_retention_domains",
+  "description": "Multi-domain CPU with DVFS states, deep-sleep power gating, retention, and level shifters.",
+  "upf_version": "2.1",
+  "top": "mobile_cpu_top",
+  "notes": [
+    "dvfs_level in the RTL can be connected to an external voltage regulator model.",
+    "CPU states model turbo, nominal, low-power, and off operating points."
+  ],
+  "domains": [
+    {
+      "name": "PD_AON",
+      "elements": ["u_power_controller", "u_core_clk_gate", "u_mem_clk_gate"],
+      "supply": "VDD_AON",
+      "ground": "VSS",
+      "always_on": true,
+      "states": [
+        {"name": "ON", "kind": "FULL_ON", "voltage": 0.80}
+      ]
+    },
+    {
+      "name": "PD_CPU",
+      "elements": ["u_fetch", "u_decode", "u_regfile", "u_execute"],
+      "supply": "VDD_CPU",
+      "ground": "VSS",
+      "states": [
+        {"name": "TURBO", "kind": "FULL_ON", "voltage": 0.95},
+        {"name": "NOMINAL", "kind": "FULL_ON", "voltage": 0.80},
+        {"name": "LOW", "kind": "FULL_ON", "voltage": 0.60},
+        {"name": "OFF", "kind": "OFF"}
+      ],
+      "switch": {
+        "name": "SW_CPU",
+        "input_supply": "VDD_AON",
+        "control": "cpu_power_gate_n",
+        "on_when": "CTRL",
+        "off_when": "!CTRL"
+      },
+      "isolation": {
+        "name": "ISO_CPU",
+        "applies_to": "outputs",
+        "signal": "iso_core",
+        "sense": "high",
+        "clamp": 0,
+        "location": "parent"
+      },
+      "retention": {
+        "name": "RET_CPU_REGS",
+        "elements": ["u_regfile"],
+        "save_signal": "ret_save",
+        "restore_signal": "ret_restore",
+        "retention_supply": "VDD_AON",
+        "ground": "VSS"
+      }
+    },
+    {
+      "name": "PD_MEM",
+      "elements": ["u_icache", "u_dmem"],
+      "supply": "VDD_MEM",
+      "ground": "VSS",
+      "states": [
+        {"name": "ON", "kind": "FULL_ON", "voltage": 0.80},
+        {"name": "RET", "kind": "FULL_ON", "voltage": 0.55},
+        {"name": "OFF", "kind": "OFF"}
+      ],
+      "switch": {
+        "name": "SW_MEM",
+        "input_supply": "VDD_AON",
+        "control": "mem_power_gate_n",
+        "on_when": "CTRL",
+        "off_when": "!CTRL"
+      },
+      "isolation": {
+        "name": "ISO_MEM",
+        "applies_to": "outputs",
+        "signal": "iso_mem",
+        "sense": "high",
+        "clamp": 0,
+        "location": "parent"
+      },
+      "retention": {
+        "name": "RET_MEM",
+        "elements": ["u_dmem"],
+        "save_signal": "ret_save",
+        "restore_signal": "ret_restore",
+        "retention_supply": "VDD_AON",
+        "ground": "VSS"
+      }
+    }
+  ],
+  "level_shifters": [
+    {"name": "LS_CPU_TO_AON", "domain": "PD_CPU", "applies_to": "outputs", "rule": "both", "location": "parent"},
+    {"name": "LS_AON_TO_CPU", "domain": "PD_CPU", "applies_to": "inputs", "rule": "both", "location": "self"},
+    {"name": "LS_MEM_BOUNDARY", "domain": "PD_MEM", "applies_to": "both", "rule": "both", "location": "parent"}
+  ],
+  "power_states": [
+    {"name": "TURBO", "domain_states": {"PD_AON": "ON", "PD_CPU": "TURBO", "PD_MEM": "ON"}},
+    {"name": "NOMINAL", "domain_states": {"PD_AON": "ON", "PD_CPU": "NOMINAL", "PD_MEM": "ON"}},
+    {"name": "LOW_POWER", "domain_states": {"PD_AON": "ON", "PD_CPU": "LOW", "PD_MEM": "RET"}},
+    {"name": "DEEP_SLEEP", "domain_states": {"PD_AON": "ON", "PD_CPU": "OFF", "PD_MEM": "OFF"}}
+  ],
+  "estimation": {
+    "frequency_mhz": 900,
+    "clock_gating_efficiency": 0.55,
+    "state_mix": {"TURBO": 0.08, "NOMINAL": 0.32, "LOW_POWER": 0.40, "DEEP_SLEEP": 0.20},
+    "activity_by_power_state": {"TURBO": 1.0, "NOMINAL": 0.70, "LOW_POWER": 0.22, "DEEP_SLEEP": 0.0},
+    "retention_overhead_mw": 0.55
+  }
+}
+

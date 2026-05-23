@@ -1,0 +1,34 @@
+{
+  "name": "baseline_always_on",
+  "description": "Single always-on power domain at nominal mobile CPU voltage.",
+  "upf_version": "2.1",
+  "top": "mobile_cpu_top",
+  "notes": [
+    "Reference point for comparing later schemes.",
+    "No isolation, retention, power switch, or level-shifter strategy is required."
+  ],
+  "domains": [
+    {
+      "name": "PD_TOP",
+      "elements": ["."],
+      "include_scope": true,
+      "supply": "VDD_TOP",
+      "ground": "VSS",
+      "always_on": true,
+      "states": [
+        {"name": "ON", "kind": "FULL_ON", "voltage": 0.80}
+      ]
+    }
+  ],
+  "power_states": [
+    {"name": "RUN", "domain_states": {"PD_TOP": "ON"}}
+  ],
+  "estimation": {
+    "frequency_mhz": 900,
+    "clock_gating_efficiency": 0.0,
+    "state_mix": {"RUN": 1.0},
+    "activity_by_power_state": {"RUN": 1.0},
+    "retention_overhead_mw": 0.0
+  }
+}
+

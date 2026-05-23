@@ -1,0 +1,78 @@
+# Generated from power_schemes/03_core_power_gated_sleep.json
+# Scheme: core_power_gated_sleep
+# Always-on controller with switched CPU and memory domains for deep sleep.
+# Regenerate with: python3 tools/gen_upf.py --schemes power_schemes --out upf
+
+upf_version 2.1
+set_design_top mobile_cpu_top
+
+# Note: The always-on domain keeps the power controller and clock gates alive.
+# Note: The CPU domain retains architectural register state before deep sleep.
+# Note: The memory domain is switched off in deep sleep in this toy flow.
+
+# Supply ports and nets
+create_supply_port VDD_AON
+create_supply_net VDD_AON
+connect_supply_net VDD_AON -ports VDD_AON
+create_supply_port VSS
+create_supply_net VSS
+connect_supply_net VSS -ports VSS
+create_supply_port VDD_CPU
+create_supply_net VDD_CPU
+connect_supply_net VDD_CPU -ports VDD_CPU
+create_supply_port VDD_MEM
+create_supply_net VDD_MEM
+connect_supply_net VDD_MEM -ports VDD_MEM
+
+# Power domains and supply sets
+create_power_domain PD_AON -elements {u_power_controller u_core_clk_gate u_mem_clk_gate}
+create_supply_set SS_AON -function {power VDD_AON} -function {ground VSS}
+set_domain_supply_net PD_AON -primary_power_net VDD_AON -primary_ground_net VSS
+add_power_state SS_AON -state ON -supply_expr {power == `{FULL_ON, 0.8} && ground == `{FULL_ON, 0}}
+
+create_power_domain PD_CPU -elements {u_fetch u_decode u_regfile u_execute}
+create_supply_set SS_CPU -function {power VDD_CPU} -function {ground VSS}
+set_domain_supply_net PD_CPU -primary_power_net VDD_CPU -primary_ground_net VSS
+add_power_state SS_CPU -state ON -supply_expr {power == `{FULL_ON, 0.8} && ground == `{FULL_ON, 0}}
+add_power_state SS_CPU -state OFF -supply_expr {power == {OFF} && ground == `{FULL_ON, 0}}
+
+create_power_domain PD_MEM -elements {u_icache u_dmem}
+create_supply_set SS_MEM -function {power VDD_MEM} -function {ground VSS}
+set_domain_supply_net PD_MEM -primary_power_net VDD_MEM -primary_ground_net VSS
+add_power_state SS_MEM -state ON -supply_expr {power == `{FULL_ON, 0.8} && ground == `{FULL_ON, 0}}
+add_power_state SS_MEM -state OFF -supply_expr {power == {OFF} && ground == `{FULL_ON, 0}}
+
+# Power switches
+create_power_switch SW_CPU \
+  -domain PD_CPU \
+  -input_supply_port {VIN VDD_AON} \
+  -output_supply_port {VOUT VDD_CPU} \
+  -control_port {CTRL cpu_power_gate_n} \
+  -on_state {ON VIN {CTRL}} \
+  -off_state {OFF {!CTRL}}
+
+create_power_switch SW_MEM \
+  -domain PD_MEM \
+  -input_supply_port {VIN VDD_AON} \
+  -output_supply_port {VOUT VDD_MEM} \
+  -control_port {CTRL mem_power_gate_n} \
+  -on_state {ON VIN {CTRL}} \
+  -off_state {OFF {!CTRL}}
+
+# Isolation
+set_isolation ISO_CPU -domain PD_CPU -applies_to outputs -clamp_value 0 -isolation_signal iso_core -isolation_sense high -location parent
+set_isolation ISO_MEM -domain PD_MEM -applies_to outputs -clamp_value 0 -isolation_signal iso_mem -isolation_sense high -location parent
+
+# Retention
+set_retention RET_CPU_REGS -domain PD_CPU -elements {u_regfile} -retention_power_net VDD_AON -retention_ground_net VSS
+set_retention_control RET_CPU_REGS -domain PD_CPU -save_signal {ret_save high} -restore_signal {ret_restore high}
+
+# Level shifters
+set_level_shifter LS_CPU_TO_AON -domain PD_CPU -applies_to outputs -rule both -location parent
+set_level_shifter LS_MEM_TO_CPU -domain PD_MEM -applies_to both -rule both -location parent
+
+# System power state table
+create_pst PST_CORE_POWER_GATED_SLEEP -supplies {VDD_AON VDD_CPU VDD_MEM}
+add_pst_state RUN -pst PST_CORE_POWER_GATED_SLEEP -state {ON ON ON}
+add_pst_state LIGHT_SLEEP -pst PST_CORE_POWER_GATED_SLEEP -state {ON ON ON}
+add_pst_state DEEP_SLEEP -pst PST_CORE_POWER_GATED_SLEEP -state {ON OFF OFF}

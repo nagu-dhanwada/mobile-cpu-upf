@@ -1,0 +1,19 @@
+# Python/tool caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Editor and OS noise
+.DS_Store
+.idea/
+.vscode/
+
+# EDA scratch areas
+work/
+simv*
+*.vcd
+*.fst
+*.log
+*.jou
+*.rpt
+

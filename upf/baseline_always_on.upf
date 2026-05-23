@@ -1,0 +1,28 @@
+# Generated from power_schemes/01_baseline_always_on.json
+# Scheme: baseline_always_on
+# Single always-on power domain at nominal mobile CPU voltage.
+# Regenerate with: python3 tools/gen_upf.py --schemes power_schemes --out upf
+
+upf_version 2.1
+set_design_top mobile_cpu_top
+
+# Note: Reference point for comparing later schemes.
+# Note: No isolation, retention, power switch, or level-shifter strategy is required.
+
+# Supply ports and nets
+create_supply_port VDD_TOP
+create_supply_net VDD_TOP
+connect_supply_net VDD_TOP -ports VDD_TOP
+create_supply_port VSS
+create_supply_net VSS
+connect_supply_net VSS -ports VSS
+
+# Power domains and supply sets
+create_power_domain PD_TOP -include_scope
+create_supply_set SS_TOP -function {power VDD_TOP} -function {ground VSS}
+set_domain_supply_net PD_TOP -primary_power_net VDD_TOP -primary_ground_net VSS
+add_power_state SS_TOP -state ON -supply_expr {power == `{FULL_ON, 0.8} && ground == `{FULL_ON, 0}}
+
+# System power state table
+create_pst PST_BASELINE_ALWAYS_ON -supplies {VDD_TOP}
+add_pst_state RUN -pst PST_BASELINE_ALWAYS_ON -state {ON}
