@@ -18,6 +18,7 @@ Then show these files:
 - `rtl/power_controller.sv`: idle, sleep, deep-sleep, wake, and DVFS controls.
 - `power_schemes/04_dvfs_retention_domains.json`: the richest low-power scheme.
 - `tools/gen_upf.py`: automatic UPF generator.
+- `tools/asm.py`: small workload assembler for this CPU.
 - `upf/dvfs_retention_domains.upf`: generated power intent.
 - `reports/power_summary.md`: quick comparison of schemes.
 
@@ -63,6 +64,77 @@ The current test verifies that every scheme can generate UPF and that important
 constructs such as power switches, isolation, retention, PST states, and level
 shifters appear where expected.
 
+## How To Run The Power-Aware Verilator Demo
+
+```sh
+make lint-rtl
+make sim-power
+```
+
+This generates:
+
+- `build/power_sim/power_intent.json`
+- `build/power_sim/power_intent.hpp`
+- `reports/power_sim_events.json`
+- `reports/power_sim_summary.md`
+- `waves/mobile_cpu_power.fst`
+
+Open the waveform:
+
+```sh
+make waves
+```
+
+Explain it honestly:
+
+> This is not a full commercial UPF simulator. It is a Verilator simulation
+> harness that consumes the same power-intent scheme used to generate UPF and
+> checks the project-specific subset: domains, switches, isolation, retention,
+> DVFS state requests, level shifters, and legal power-state combinations.
+
+## How To Run A Named Workload
+
+The CPU can run small assembly workloads from `workloads/*.s`. The assembler
+turns those files into ROM images and Verilator loads them into `instr_rom.sv`
+using `+program=...`.
+
+```sh
+make sim-workload WORKLOAD=memory_burst
+make waves-workload WORKLOAD=memory_burst
+```
+
+This creates:
+
+- `build/workloads/memory_burst.memh`
+- `build/workloads/memory_burst.lst`
+- `reports/memory_burst_power_sim_summary.md`
+- `waves/memory_burst.fst`
+
+Explain the split this way:
+
+> The workload is the software activity running on the CPU. The scenario file is
+> the platform power manager driving sleep, deep sleep, wake, and performance
+> boost requests. The power intent describes what domains, switches, isolation,
+> retention, DVFS states, and level shifters must exist for those transitions.
+
+## How To Create Joules Inputs
+
+For the built-in program:
+
+```sh
+make joules-input
+```
+
+For a named workload:
+
+```sh
+make joules-workload WORKLOAD=memory_burst
+```
+
+This writes a VCD plus a Cadence Joules Tcl starter script. Joules still needs
+real technology `.lib` files from a process/library kit before it can produce
+meaningful absolute power numbers.
+
 ## How To Modify A Power Scheme
 
 1. Copy one JSON file in `power_schemes/`.
@@ -102,8 +174,13 @@ Use this order:
 5. Point out generated UPF constructs:
    `create_power_domain`, `create_power_switch`, `set_isolation`,
    `set_retention`, `set_level_shifter`, and `add_pst_state`.
-6. Run `make explore` and show the summary table.
-7. Run `make test` to show the automation is checked.
+6. Run `make sim-power` and show `reports/power_sim_summary.md`.
+7. Run `make sim-workload WORKLOAD=memory_burst` and show how workload activity
+   is separated from power-manager stimulus.
+8. Run `make joules-workload WORKLOAD=memory_burst` and explain that it creates
+   a VCD and Joules Tcl starter script for an industry RTL power-analysis flow.
+9. Run `make explore` and show the summary table.
+10. Run `make test` to show the automation is checked.
 
 ## Honest Limitations To Mention
 
@@ -111,6 +188,10 @@ Use this order:
 - The power numbers are early architectural estimates.
 - Generated UPF is intentionally tool-neutral and may need small syntax
   adjustments for a specific EDA vendor flow.
+- The Verilator power-aware simulation is a project-specific UPF subset model,
+  not a full IEEE 1801 signoff simulator.
+- The assembly workload language is intentionally tiny and exists to create
+  repeatable CPU activity, not to model a production compiler or ISA.
 - A real flow would add synthesis, simulation, UPF-aware verification,
   equivalence checks, and physical implementation signoff.
 
@@ -120,7 +201,6 @@ You can say:
 
 > I built this to demonstrate the workflow: design hierarchy, define power
 > domains, express strategies declaratively, generate UPF automatically, and
-> compare schemes. The next step would be connecting it to a simulator or
-> synthesis tool with UPF support and replacing the placeholder estimator with
-> real switching activity and library data.
-
+> compare schemes. I also added workload-driven Verilator runs that produce VCD
+> activity and a Joules Tcl starter script, so the same demo can connect to a
+> real RTL power-analysis environment when technology libraries are available.

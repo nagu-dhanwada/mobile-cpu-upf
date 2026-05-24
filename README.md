@@ -22,6 +22,7 @@ tools/           UPF generation and exploration scripts
 upf/             Generated UPF output
 docs/            Architecture notes
 tests/           Basic generator tests
+workloads/       Small assembly workloads for the CPU model
 ```
 
 ## Quick Start
@@ -44,12 +45,122 @@ Run tests:
 make test
 ```
 
+Run the Verilator-based UPF-aware demo simulation:
+
+```sh
+make sim-power
+```
+
+Use a specific scheme by name:
+
+```sh
+make sim-power SCHEME=dvfs_retention_domains
+```
+
+Open the generated waveform:
+
+```sh
+make waves
+```
+
+The waveform target uses `sim/power_view.sucl` to preload the power-related
+signals in Surfer when Surfer is installed.
+
+Run a named CPU workload through the same power-aware scenario:
+
+```sh
+make sim-workload WORKLOAD=memory_burst
+```
+
+This assembles `workloads/memory_burst.s`, loads it into `instr_rom.sv` at
+runtime, runs `sim/scenarios/power_modes.tcl`, and writes a workload-specific
+summary and waveform. Use `WORKLOAD=alu_idle`, `WORKLOAD=compute_burst`, or
+add another `.s` file under `workloads/`.
+
+Open that workload waveform:
+
+```sh
+make waves-workload WORKLOAD=memory_burst
+```
+
+Generate a VCD and Cadence Joules RTL power-analysis starter script:
+
+```sh
+make joules-input
+```
+
+This creates `waves/mobile_cpu_power.vcd` and
+`build/joules/run_joules_power.tcl`.
+
+Generate Joules inputs for a specific workload:
+
+```sh
+make joules-workload WORKLOAD=memory_burst
+```
+
+This creates `waves/memory_burst.vcd` and
+`build/joules/memory_burst_run_joules_power.tcl`.
+
 Generated artifacts:
 
 - `upf/*.upf`
 - `upf/index.md`
 - `reports/power_summary.csv`
 - `reports/power_summary.md`
+- `reports/power_sim_summary.md`
+- `reports/power_sim_events.json`
+- `waves/mobile_cpu_power.fst`
+- `waves/mobile_cpu_power.vcd`
+- `build/joules/run_joules_power.tcl`
+- `build/workloads/*.memh`
+- `build/workloads/*.lst`
+- `waves/<workload>.fst`
+- `waves/<workload>.vcd`
+- `build/joules/<workload>_run_joules_power.tcl`
+
+## Power-Aware Simulation
+
+The `sim-power` target is a practical Verilator-based approximation of
+UPF-aware RTL simulation for this specific project. It uses the same JSON power
+scheme that generates UPF, converts it into simulation metadata, and checks:
+
+- legal power-state table combinations,
+- power switch behavior,
+- isolation behavior while switched domains are off,
+- retention save and restore behavior,
+- DVFS state requests,
+- level-shifter coverage for voltage-crossing states.
+
+This is not a replacement for commercial IEEE 1801 signoff in tools such as
+Questa, VCS, or Xcelium. It is an educational and interview-ready model of the
+same low-power verification ideas using open-source tooling.
+
+## Workload Flow
+
+The CPU has a tiny 16-bit instruction format. `tools/asm.py` lets you write
+small assembly workloads instead of editing `rtl/instr_rom.sv` every time.
+
+```sh
+make assemble-workload WORKLOAD=compute_burst
+```
+
+The assembler writes:
+
+- `build/workloads/compute_burst.memh`: ROM contents for `$readmemh`.
+- `build/workloads/compute_burst.lst`: readable address/opcode listing.
+
+`sim-workload` then passes the generated `.memh` file to Verilator with
+`+program=...`, so the same RTL can run different programs without rebuilding
+the ROM source. The scenario file controls external power-management pins such
+as `sleep_req`, `deep_sleep_req`, `wake_irq`, and `perf_boost`, while the loaded
+program creates CPU and memory activity before it reaches `WFI`.
+
+That split is useful when explaining the project:
+
+- the workload models what software is doing on the CPU,
+- the scenario models what the platform power manager asks the chip to do,
+- the power intent JSON/UPF defines which transitions are legal and protected,
+- the Verilator harness checks that the RTL behavior agrees with the intent.
 
 ## Included Schemes
 
@@ -83,4 +194,3 @@ The generator reads the domain list, supply names, power states, switches,
 isolation rules, retention rules, and level-shifter requests from the JSON file.
 Keep the RTL instance names aligned with `rtl/mobile_cpu_top.sv` when assigning
 elements to domains.
-

@@ -1,0 +1,38 @@
+# Surfer command file for the mobile CPU power-aware waveform.
+# Run with: surfer --command-file sim/power_view.sucl waves/mobile_cpu_power.fst
+
+variable_force_name_type Local
+preference_set_clock_highlight Cycle
+
+divider_add Testbench
+variable_add TOP.mobile_cpu_power_top.clk
+variable_add TOP.mobile_cpu_power_top.reset_n
+variable_add TOP.mobile_cpu_power_top.sleep_req
+variable_add TOP.mobile_cpu_power_top.deep_sleep_req
+variable_add TOP.mobile_cpu_power_top.wake_irq
+variable_add TOP.mobile_cpu_power_top.perf_boost
+
+divider_add CPU_state
+variable_add TOP.mobile_cpu_power_top.power_mode
+variable_add TOP.mobile_cpu_power_top.debug_pc
+variable_add TOP.mobile_cpu_power_top.dvfs_level
+variable_add TOP.mobile_cpu_power_top.cpu_sleeping
+
+divider_add Clock_gating
+variable_add TOP.mobile_cpu_power_top.core_clk_en
+variable_add TOP.mobile_cpu_power_top.mem_clk_en
+
+divider_add Power_gating
+variable_add TOP.mobile_cpu_power_top.cpu_power_gate_n
+variable_add TOP.mobile_cpu_power_top.mem_power_gate_n
+
+divider_add Isolation
+variable_add TOP.mobile_cpu_power_top.iso_core
+variable_add TOP.mobile_cpu_power_top.iso_mem
+
+divider_add Retention
+variable_add TOP.mobile_cpu_power_top.ret_save
+variable_add TOP.mobile_cpu_power_top.ret_restore
+
+zoom_fit
+

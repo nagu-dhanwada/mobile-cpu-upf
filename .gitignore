@@ -9,11 +9,17 @@ __pycache__/
 .vscode/
 
 # EDA scratch areas
+build/
+reports/*_power_sim_*.json
+reports/*_power_sim_*.md
+reports/power_sim_*.json
+reports/power_sim_*.md
+reports/joules/
 work/
+waves/
 simv*
 *.vcd
 *.fst
 *.log
 *.jou
 *.rpt
-
