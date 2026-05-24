@@ -1,0 +1,33 @@
+{
+  "name": "mobile_cpu_default_opps",
+  "description": "Educational operating performance points for IEEE 2416 DVFS exploration on the mobile CPU.",
+  "opps": [
+    {
+      "name": "LOW",
+      "dvfs_level": "0",
+      "cpu_voltage_v": 0.60,
+      "cpu_frequency_mhz": 300.0,
+      "mem_voltage_v": 0.80,
+      "mem_frequency_mhz": 300.0,
+      "description": "Low-voltage, low-frequency energy-saving point."
+    },
+    {
+      "name": "NOMINAL",
+      "dvfs_level": "1",
+      "cpu_voltage_v": 0.80,
+      "cpu_frequency_mhz": 900.0,
+      "mem_voltage_v": 0.80,
+      "mem_frequency_mhz": 900.0,
+      "description": "Nominal point matching the generic 7 nm default technology setup."
+    },
+    {
+      "name": "TURBO",
+      "dvfs_level": "2",
+      "cpu_voltage_v": 0.95,
+      "cpu_frequency_mhz": 1200.0,
+      "mem_voltage_v": 0.80,
+      "mem_frequency_mhz": 900.0,
+      "description": "Higher-performance CPU point with memory held at nominal voltage."
+    }
+  ]
+}

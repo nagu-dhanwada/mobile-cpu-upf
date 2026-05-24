@@ -1,0 +1,42 @@
+{
+  "name": "generic_7nm",
+  "description": "Educational generic 7 nm assumptions for early RTL macro power exploration.",
+  "process": {
+    "node_nm": 7,
+    "corner": "tt"
+  },
+  "temperature_c": 25.0,
+  "clock_frequency_mhz": 900.0,
+  "supplies": {
+    "VDD_AON": 0.80,
+    "VDD_CPU_LOW": 0.60,
+    "VDD_CPU_NOM": 0.80,
+    "VDD_CPU_TURBO": 0.95,
+    "VDD_MEM": 0.80
+  },
+  "energy": {
+    "flop_clock_pj_per_bit": 0.0009,
+    "logic_op_pj_per_bit": 0.0015,
+    "decode_pj_per_instruction_bit": 0.00045,
+    "rom_read_pj_per_16b": 0.20,
+    "sram_read_pj_per_32b": 1.20,
+    "sram_write_pj_per_32b": 1.60,
+    "mode_transition_pj": 1.80,
+    "toggle_pj_per_bit": 0.00008
+  },
+  "leakage": {
+    "logic_nw_per_gate": 0.80,
+    "flop_nw_per_bit": 1.50,
+    "sram_nw_per_bit": 0.030,
+    "retention_factor": 0.28,
+    "power_gated_factor": 0.015,
+    "idle_factor": 0.82
+  },
+  "scaling": {
+    "reference_voltage_v": 0.80,
+    "dynamic_voltage_exponent": 2.0,
+    "leakage_voltage_exponent": 1.2,
+    "reference_temperature_c": 25.0,
+    "leakage_per_10c_factor": 1.35
+  }
+}

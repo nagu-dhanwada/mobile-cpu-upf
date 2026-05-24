@@ -101,6 +101,34 @@ make joules-workload WORKLOAD=memory_burst
 This creates `waves/memory_burst.vcd` and
 `build/joules/memory_burst_run_joules_power.tcl`.
 
+Run the IEEE 2416 RTL macro-model power flow:
+
+```sh
+make 2416-power WORKLOAD=memory_burst TECH=generic_7nm
+```
+
+This generates a reference XSD, characterizes XML power models for the CPU
+blocks, validates those models, runs the workload VCD simulation, and writes
+power reports under `reports/2416/memory_burst_generic_7nm/`.
+
+Generate visual workload comparison charts:
+
+```sh
+make 2416-compare-workloads TECH=generic_7nm SCHEME=dvfs_retention_domains
+```
+
+Generate visual power-scheme comparison charts:
+
+```sh
+make 2416-compare-schemes WORKLOAD=memory_burst TECH=generic_7nm
+```
+
+Explore DVFS operating points for one workload:
+
+```sh
+make 2416-dvfs-explore WORKLOAD=memory_burst TECH=generic_7nm SCHEME=dvfs_retention_domains
+```
+
 Generated artifacts:
 
 - `upf/*.upf`
@@ -117,6 +145,14 @@ Generated artifacts:
 - `waves/<workload>.fst`
 - `waves/<workload>.vcd`
 - `build/joules/<workload>_run_joules_power.tcl`
+- `schemas/ieee2416-2025.xsd`
+- `power_models/mobile_cpu/rtl/*.xml`
+- `reports/2416/<workload>_<tech>/2416_power_summary.md`
+- `reports/2416/<workload>_<tech>/2416_power_waveform.svg`
+- `reports/2416/compare_workloads_<tech>_<scheme>/2416_compare_energy.svg`
+- `reports/2416/compare_schemes_<workload>_<tech>/2416_compare_energy.svg`
+- `reports/2416/dvfs/<workload>_<tech>_<scheme>/dvfs_summary.md`
+- `reports/2416/dvfs/<workload>_<tech>_<scheme>/dvfs_contributors.svg`
 
 ## Power-Aware Simulation
 
@@ -161,6 +197,34 @@ That split is useful when explaining the project:
 - the scenario models what the platform power manager asks the chip to do,
 - the power intent JSON/UPF defines which transitions are legal and protected,
 - the Verilator harness checks that the RTL behavior agrees with the intent.
+
+## IEEE 2416 RTL Power Models
+
+The `2416-power` target turns the CPU into a small standards-based power
+modeling platform. It creates XML macro models for the RTL blocks, validates
+them against `schemas/ieee2416-2025.xsd`, extracts activity from a VCD, and
+estimates energy/power by block and power domain.
+
+The first model abstraction is:
+
+```text
+Energy =
+  leakage(state, PVT) * time
+  + clock energy * active cycles
+  + event energy * workload events
+  + optional RTL toggle energy
+```
+
+See `docs/ieee2416_rtl_power_flow.md` for the full walkthrough.
+
+The estimator also writes SVG charts, including a stacked domain power waveform
+for each run and bar charts for workload or power-scheme comparisons.
+
+For DVFS exploration, `make 2416-dvfs-explore` replays the same workload at the
+OPPs in `configs/dvfs/mobile_cpu_opps.json` and reports energy, average power,
+runtime, energy-delay product, and leakage/clock/event/toggle contributor
+breakdowns. The normal Joules collateral flow is unchanged; this is an
+additional open-source estimator path.
 
 ## Included Schemes
 

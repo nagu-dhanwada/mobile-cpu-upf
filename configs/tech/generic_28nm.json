@@ -1,0 +1,42 @@
+{
+  "name": "generic_28nm",
+  "description": "Educational generic 28 nm assumptions for comparing RTL macro power trends.",
+  "process": {
+    "node_nm": 28,
+    "corner": "tt"
+  },
+  "temperature_c": 25.0,
+  "clock_frequency_mhz": 450.0,
+  "supplies": {
+    "VDD_AON": 1.00,
+    "VDD_CPU_LOW": 0.80,
+    "VDD_CPU_NOM": 1.00,
+    "VDD_CPU_TURBO": 1.10,
+    "VDD_MEM": 1.00
+  },
+  "energy": {
+    "flop_clock_pj_per_bit": 0.0032,
+    "logic_op_pj_per_bit": 0.0052,
+    "decode_pj_per_instruction_bit": 0.00145,
+    "rom_read_pj_per_16b": 0.55,
+    "sram_read_pj_per_32b": 3.60,
+    "sram_write_pj_per_32b": 4.60,
+    "mode_transition_pj": 5.20,
+    "toggle_pj_per_bit": 0.00028
+  },
+  "leakage": {
+    "logic_nw_per_gate": 0.22,
+    "flop_nw_per_bit": 0.55,
+    "sram_nw_per_bit": 0.012,
+    "retention_factor": 0.20,
+    "power_gated_factor": 0.008,
+    "idle_factor": 0.74
+  },
+  "scaling": {
+    "reference_voltage_v": 1.00,
+    "dynamic_voltage_exponent": 2.0,
+    "leakage_voltage_exponent": 1.10,
+    "reference_temperature_c": 25.0,
+    "leakage_per_10c_factor": 1.25
+  }
+}

@@ -19,6 +19,16 @@ POWER_SIM_OBJ ?= /private/tmp/mobile_cpu_upf_power_sim_obj
 POWER_SIM_OBJ_VCD ?= /private/tmp/mobile_cpu_upf_power_sim_vcd_obj
 POWER_SIM_SRC_LINK ?= /private/tmp/mobile_cpu_upf_src
 JOULES_DIR ?= build/joules
+TECH ?= generic_7nm
+TECH_CONFIG ?= configs/tech/$(TECH).json
+P2416_SPEC ?= spec_model/ieee2416_2025_schema.json
+P2416_SCHEMA ?= schemas/ieee2416-2025.xsd
+P2416_MODEL_DIR ?= power_models/mobile_cpu/rtl
+P2416_REPORT_DIR ?= reports/2416/$(WORKLOAD)_$(TECH)
+P2416_WORKLOADS ?= alu_idle compute_burst memory_burst
+P2416_SCHEMES ?= baseline_always_on clock_gated_idle core_power_gated_sleep dvfs_retention_domains
+DVFS_OPPS ?= configs/dvfs/mobile_cpu_opps.json
+DVFS_REPORT_DIR ?= reports/2416/dvfs/$(WORKLOAD)_$(TECH)_$(SCHEME)
 
 RTL_FILES := \
 	rtl/mobile_cpu_pkg.sv \
@@ -34,7 +44,7 @@ RTL_FILES := \
 
 VERILATOR_WARNINGS := -Wno-UNUSEDSIGNAL -Wno-COMBDLY
 
-.PHONY: upf explore test lint-rtl assemble-workload sim-power sim-power-vcd sim-workload sim-workload-vcd joules-script joules-input joules-workload waves waves-workload clean
+.PHONY: upf explore test lint-rtl assemble-workload sim-power sim-power-vcd sim-workload sim-workload-vcd joules-script joules-input joules-workload 2416-schema 2416-characterize 2416-validate 2416-activity 2416-power 2416-compare-workloads 2416-compare-schemes 2416-dvfs-explore waves waves-workload clean
 
 upf:
 	$(PYTHON) tools/gen_upf.py --schemes power_schemes --out upf
@@ -151,6 +161,64 @@ joules-workload: upf sim-workload-vcd
 		--vcd "$(abspath waves/$(WORKLOAD).vcd)" \
 		--upf upf/$(SCHEME).upf \
 		--out $(JOULES_DIR)/$(WORKLOAD)_run_joules_power.tcl
+
+2416-schema:
+	$(PYTHON) tools/gen_2416_xsd.py --spec $(P2416_SPEC) --out $(P2416_SCHEMA)
+
+2416-characterize: 2416-schema
+	$(PYTHON) tools/characterize_2416.py --tech $(TECH_CONFIG) --out $(P2416_MODEL_DIR)
+
+2416-validate: 2416-schema
+	$(PYTHON) tools/validate_2416.py $(P2416_MODEL_DIR) --xsd $(P2416_SCHEMA)
+
+2416-activity: sim-workload-vcd
+	$(PYTHON) tools/vcd_activity_2416.py \
+		--vcd waves/$(WORKLOAD).vcd \
+		--out $(P2416_REPORT_DIR)/2416_activity.json
+
+2416-power: 2416-characterize 2416-validate sim-workload-vcd
+	$(PYTHON) tools/estimate_power_2416.py \
+		--models $(P2416_MODEL_DIR) \
+		--tech $(TECH_CONFIG) \
+		--vcd waves/$(WORKLOAD).vcd \
+		--scheme $(SCHEME) \
+		--out $(P2416_REPORT_DIR)
+
+2416-compare-workloads:
+	@set -e; for workload in $(P2416_WORKLOADS); do \
+		$(MAKE) 2416-power WORKLOAD=$$workload TECH=$(TECH) SCHEME=$(SCHEME) P2416_REPORT_DIR=reports/2416/$${workload}_$(TECH); \
+	done
+	$(PYTHON) tools/compare_2416.py \
+		--result-root reports/2416 \
+		--labels $(P2416_WORKLOADS) \
+		--suffix _$(TECH) \
+		--title "IEEE 2416 Workload Power Comparison ($(TECH), $(SCHEME))" \
+		--out reports/2416/compare_workloads_$(TECH)_$(SCHEME)
+
+2416-compare-schemes: 2416-characterize 2416-validate sim-workload-vcd
+	@set -e; for scheme in $(P2416_SCHEMES); do \
+		$(PYTHON) tools/estimate_power_2416.py \
+			--models $(P2416_MODEL_DIR) \
+			--tech $(TECH_CONFIG) \
+			--vcd waves/$(WORKLOAD).vcd \
+			--scheme $$scheme \
+			--out reports/2416/$(WORKLOAD)_$(TECH)_$${scheme}; \
+	done
+	$(PYTHON) tools/compare_2416.py \
+		--result-root reports/2416 \
+		--labels $(P2416_SCHEMES) \
+		--prefix $(WORKLOAD)_$(TECH)_ \
+		--title "IEEE 2416 Power Scheme Comparison ($(WORKLOAD), $(TECH))" \
+		--out reports/2416/compare_schemes_$(WORKLOAD)_$(TECH)
+
+2416-dvfs-explore: 2416-characterize 2416-validate sim-workload-vcd
+	$(PYTHON) tools/dvfs_explore_2416.py \
+		--models $(P2416_MODEL_DIR) \
+		--tech $(TECH_CONFIG) \
+		--opps $(DVFS_OPPS) \
+		--vcd waves/$(WORKLOAD).vcd \
+		--scheme $(SCHEME) \
+		--out $(DVFS_REPORT_DIR)
 
 waves:
 	@if [ -n "$(SURFER)" ]; then \

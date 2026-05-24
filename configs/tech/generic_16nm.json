@@ -1,0 +1,42 @@
+{
+  "name": "generic_16nm",
+  "description": "Educational generic 16 nm assumptions for comparing RTL macro power trends.",
+  "process": {
+    "node_nm": 16,
+    "corner": "tt"
+  },
+  "temperature_c": 25.0,
+  "clock_frequency_mhz": 650.0,
+  "supplies": {
+    "VDD_AON": 0.90,
+    "VDD_CPU_LOW": 0.70,
+    "VDD_CPU_NOM": 0.90,
+    "VDD_CPU_TURBO": 1.05,
+    "VDD_MEM": 0.90
+  },
+  "energy": {
+    "flop_clock_pj_per_bit": 0.0018,
+    "logic_op_pj_per_bit": 0.0030,
+    "decode_pj_per_instruction_bit": 0.00085,
+    "rom_read_pj_per_16b": 0.34,
+    "sram_read_pj_per_32b": 2.10,
+    "sram_write_pj_per_32b": 2.75,
+    "mode_transition_pj": 3.20,
+    "toggle_pj_per_bit": 0.00016
+  },
+  "leakage": {
+    "logic_nw_per_gate": 0.45,
+    "flop_nw_per_bit": 0.95,
+    "sram_nw_per_bit": 0.020,
+    "retention_factor": 0.24,
+    "power_gated_factor": 0.010,
+    "idle_factor": 0.78
+  },
+  "scaling": {
+    "reference_voltage_v": 0.90,
+    "dynamic_voltage_exponent": 2.0,
+    "leakage_voltage_exponent": 1.15,
+    "reference_temperature_c": 25.0,
+    "leakage_per_10c_factor": 1.30
+  }
+}

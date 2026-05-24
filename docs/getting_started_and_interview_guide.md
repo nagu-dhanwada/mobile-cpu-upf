@@ -19,6 +19,8 @@ Then show these files:
 - `power_schemes/04_dvfs_retention_domains.json`: the richest low-power scheme.
 - `tools/gen_upf.py`: automatic UPF generator.
 - `tools/asm.py`: small workload assembler for this CPU.
+- `tools/estimate_power_2416.py`: RTL power estimation from IEEE 2416 XML
+  models and VCD activity.
 - `upf/dvfs_retention_domains.upf`: generated power intent.
 - `reports/power_summary.md`: quick comparison of schemes.
 
@@ -135,6 +137,47 @@ This writes a VCD plus a Cadence Joules Tcl starter script. Joules still needs
 real technology `.lib` files from a process/library kit before it can produce
 meaningful absolute power numbers.
 
+## How To Run The IEEE 2416 RTL Power Flow
+
+```sh
+make 2416-power WORKLOAD=memory_burst TECH=generic_7nm
+```
+
+This generates/uses:
+
+- `schemas/ieee2416-2025.xsd`
+- `power_models/mobile_cpu/rtl/*.xml`
+- `waves/memory_burst.vcd`
+- `reports/2416/memory_burst_generic_7nm/2416_power_summary.md`
+- `reports/2416/memory_burst_generic_7nm/2416_power_waveform.svg`
+
+Explain it this way:
+
+> The XML files are executable macro power models for each RTL block. The VCD
+> supplies workload activity and power-state residency. The estimator combines
+> leakage, clock, event, and optional toggle components to report power by block
+> and by power domain.
+
+For visual comparisons:
+
+```sh
+make 2416-compare-workloads TECH=generic_7nm SCHEME=dvfs_retention_domains
+make 2416-compare-schemes WORKLOAD=memory_burst TECH=generic_7nm
+make 2416-dvfs-explore WORKLOAD=memory_burst TECH=generic_7nm
+```
+
+Those commands produce SVG bar charts for workload energy/power and
+power-scheme energy/power. The DVFS command additionally writes
+`reports/2416/dvfs/.../dvfs_summary.md`, OPP comparison CSVs, and charts for
+energy, average power, runtime, energy-delay product, and contributor breakdown.
+
+In an interview, explain DVFS this way:
+
+> The same workload activity is replayed at LOW, NOMINAL, and TURBO operating
+> points. Frequency changes runtime, voltage changes dynamic and leakage
+> scaling, and the 2416 contributors show whether the result is dominated by
+> leakage, clocking, workload events, or RTL toggles.
+
 ## How To Modify A Power Scheme
 
 1. Copy one JSON file in `power_schemes/`.
@@ -179,8 +222,10 @@ Use this order:
    is separated from power-manager stimulus.
 8. Run `make joules-workload WORKLOAD=memory_burst` and explain that it creates
    a VCD and Joules Tcl starter script for an industry RTL power-analysis flow.
-9. Run `make explore` and show the summary table.
-10. Run `make test` to show the automation is checked.
+9. Run `make 2416-power WORKLOAD=memory_burst` and show the standards-based
+   XML model flow replacing the placeholder estimator.
+10. Run `make explore` and show the summary table.
+11. Run `make test` to show the automation is checked.
 
 ## Honest Limitations To Mention
 

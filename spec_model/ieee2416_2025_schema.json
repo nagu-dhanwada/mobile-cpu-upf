@@ -1,0 +1,70 @@
+{
+  "standard": "IEEE2416-2025",
+  "namespace": "https://standards.ieee.org/ieee/2416/2025/power-model",
+  "root": "powerModel",
+  "version": "0.1.0",
+  "description": "Reference implementation schema source for IEEE 2416-style parameterized power models. This first profile covers RTL macro models used by the mobile CPU example.",
+  "enumerations": {
+    "modelClass": [
+      "rtlMacro",
+      "synthesisCalibratedMacro",
+      "implementationMacro"
+    ],
+    "abstractionLevel": [
+      "rtl",
+      "gate",
+      "physical",
+      "system"
+    ],
+    "powerDomain": [
+      "PD_AON",
+      "PD_CPU",
+      "PD_MEM"
+    ],
+    "powerState": [
+      "RUN",
+      "IDLE",
+      "LIGHT_SLEEP",
+      "DEEP_SLEEP",
+      "WAKE"
+    ],
+    "clockRef": [
+      "top",
+      "core",
+      "mem",
+      "none"
+    ],
+    "componentType": [
+      "leakage",
+      "clock",
+      "event",
+      "toggle"
+    ],
+    "contributorType": [
+      "static",
+      "clock",
+      "event",
+      "toggle",
+      "transition"
+    ]
+  },
+  "requiredElements": [
+    "metadata",
+    "design",
+    "operatingConditions",
+    "powerStates",
+    "activityParameters",
+    "powerComponents",
+    "powerContributors",
+    "scaling",
+    "validity"
+  ],
+  "traceability": {
+    "pvt": "Operating conditions and scaling elements capture process, voltage, temperature, and validity ranges.",
+    "activity": "Activity parameters describe workload events, clock cycles, and optional signal toggles.",
+    "powerState": "Power states capture operating mode, supply behavior, clock behavior, isolation, and retention.",
+    "architecture": "Design parameters capture block hierarchy, domain binding, bit widths, memories, and registers.",
+    "executableModel": "Power components provide machine-readable leakage, clock, event, and toggle coefficients.",
+    "contributors": "Power contributors map each coefficient to its physical or architectural driver, including PVT, voltage, frequency, state, and workload dependencies."
+  }
+}
