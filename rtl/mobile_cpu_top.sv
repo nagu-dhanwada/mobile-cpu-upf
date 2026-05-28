@@ -11,8 +11,6 @@ module mobile_cpu_top (
   output logic [2:0] power_mode,
   output logic [31:0] debug_pc
 );
-  import mobile_cpu_pkg::*;
-
   logic core_clk;
   logic mem_clk;
   logic core_clk_en;
@@ -28,7 +26,7 @@ module mobile_cpu_top (
   logic [31:0] instr_addr;
   logic [15:0] instr_rdata;
   logic [15:0] instr;
-  decoded_instr_t decoded;
+  mobile_cpu_pkg::decoded_instr_t decoded;
 
   logic [3:0]  rs2_addr;
   logic [31:0] rs1_data;
@@ -103,7 +101,7 @@ module mobile_cpu_top (
     .decoded (decoded)
   );
 
-  assign rs2_addr = (decoded.opcode == OP_ST) ? decoded.rd : decoded.rs2_imm;
+  assign rs2_addr = (decoded.opcode == mobile_cpu_pkg::OP_ST) ? decoded.rd : decoded.rs2_imm;
 
   regfile u_regfile (
     .clk              (core_clk),
@@ -151,4 +149,3 @@ module mobile_cpu_top (
   assign cpu_sleeping = !core_clk_en || !cpu_power_gate_n;
   assign debug_pc     = instr_addr;
 endmodule
-

@@ -1,0 +1,17 @@
+{
+  "name": "nangate45",
+  "description": "Nangate Open Cell Library typical 45 nm corner used for educational technology mapping.",
+  "process": {
+    "node_nm": 45,
+    "corner": "typical"
+  },
+  "temperature_c": 25.0,
+  "nominal_voltage_v": 1.10,
+  "clock_period_ns": 10.0,
+  "liberty": "third_party/nangate45/NangateOpenCellLibrary_typical.lib",
+  "blackbox_verilog": "third_party/nangate45/NangateOpenCellLibrary.blackbox.v",
+  "license": "third_party/nangate45/OpenCellLibraryLicenseSi2.txt",
+  "stdcell_models_dir": "power_models/stdcells/nangate45",
+  "stdcell_sim_verilog": "build/techlibs/nangate45/NangateOpenCellLibrary.functional.v",
+  "source": "https://github.com/The-OpenROAD-Project/alpha-release/tree/master/flow/platforms/nangate45"
+}

@@ -1,5 +1,6 @@
 PYTHON ?= python3
 VERILATOR ?= verilator
+YOSYS ?= yosys
 SURFER ?= $(shell command -v surfer || true)
 GTKWAVE ?= $(shell command -v gtkwave || echo gtkwave)
 GTKWAVE_APP ?= /Applications/gtkwave.app
@@ -29,6 +30,28 @@ P2416_WORKLOADS ?= alu_idle compute_burst memory_burst
 P2416_SCHEMES ?= baseline_always_on clock_gated_idle core_power_gated_sleep dvfs_retention_domains
 DVFS_OPPS ?= configs/dvfs/mobile_cpu_opps.json
 DVFS_REPORT_DIR ?= reports/2416/dvfs/$(WORKLOAD)_$(TECH)_$(SCHEME)
+SYNTH_DIR ?= build/synth/$(WORKLOAD)
+SYNTH_NETLIST ?= $(SYNTH_DIR)/mobile_cpu_gate.v
+SYNTH_JSON ?= $(SYNTH_DIR)/mobile_cpu_synth.json
+SYNTH_METRICS ?= $(SYNTH_DIR)/mobile_cpu_synth_metrics.json
+SYNTH_MODEL_DIR ?= power_models/mobile_cpu/synth
+SYNTH_2416_REPORT_DIR ?= reports/2416_synth/$(WORKLOAD)_$(TECH)
+GLS_OBJ ?= /private/tmp/mobile_cpu_upf_gls_obj
+TECHLIB ?= nangate45
+TECHLIB_CONFIG ?= configs/techlibs/$(TECHLIB).json
+TECHLIB_LIBERTY ?= third_party/nangate45/NangateOpenCellLibrary_typical.lib
+TECHLIB_STDCELL_SIM ?= build/techlibs/$(TECHLIB)/NangateOpenCellLibrary.functional.v
+STDCELL_MODEL_DIR ?= power_models/stdcells/$(TECHLIB)
+STDCELL_SUMMARY ?= $(STDCELL_MODEL_DIR)/stdcells_summary.json
+MEMORY_MACRO_CONFIG ?= configs/memory_macros/mobile_cpu_memory_macros.json
+MEMORY_MACRO_MODEL_DIR ?= power_models/mobile_cpu/macros
+MAPPED_DIR ?= build/mapped/$(TECHLIB)/$(WORKLOAD)
+MAPPED_NETLIST ?= $(MAPPED_DIR)/mobile_cpu_mapped.v
+MAPPED_JSON ?= $(MAPPED_DIR)/mobile_cpu_mapped.json
+MAPPED_METRICS ?= $(MAPPED_DIR)/mobile_cpu_mapped_metrics.json
+MAPPED_GLS_OBJ ?= /private/tmp/mobile_cpu_upf_mapped_gls_obj
+MAPPED_2416_REPORT_DIR ?= reports/2416_mapped/$(TECHLIB)/$(WORKLOAD)_$(TECH)
+ABSTRACTION_COMPARE_DIR ?= reports/2416_compare/$(WORKLOAD)_$(TECH)_$(TECHLIB)
 
 RTL_FILES := \
 	rtl/mobile_cpu_pkg.sv \
@@ -43,8 +66,9 @@ RTL_FILES := \
 	rtl/mobile_cpu_top.sv
 
 VERILATOR_WARNINGS := -Wno-UNUSEDSIGNAL -Wno-COMBDLY
+VERILATOR_GLS_WARNINGS := $(VERILATOR_WARNINGS) -Wno-DECLFILENAME -Wno-LATCH
 
-.PHONY: upf explore test lint-rtl assemble-workload sim-power sim-power-vcd sim-workload sim-workload-vcd joules-script joules-input joules-workload 2416-schema 2416-characterize 2416-validate 2416-activity 2416-power 2416-compare-workloads 2416-compare-schemes 2416-dvfs-explore waves waves-workload clean
+.PHONY: upf explore test lint-rtl assemble-workload sim-power sim-power-vcd sim-workload sim-workload-vcd synth gls synth-mapped gls-mapped techlib-nangate45 2416-stdcell-models 2416-stdcell-validate 2416-memory-macros 2416-memory-macro-validate joules-script joules-input joules-workload 2416-schema 2416-characterize 2416-validate 2416-activity 2416-power 2416-compare-workloads 2416-compare-schemes 2416-dvfs-explore 2416-synth-characterize 2416-synth-validate 2416-synth-power 2416-mapped-power 2416-compare-abstractions waves waves-workload clean
 
 upf:
 	$(PYTHON) tools/gen_upf.py --schemes power_schemes --out upf
@@ -140,6 +164,63 @@ sim-workload-vcd: assemble-workload
 		+power-sim-summary=reports/$(WORKLOAD)_power_sim_vcd_summary.md \
 		+power-sim-wave=waves/$(WORKLOAD).vcd
 
+synth: assemble-workload
+	$(PYTHON) tools/run_yosys_synth.py \
+		--yosys $(YOSYS) \
+		--program $(WORKLOAD_MEMH) \
+		--workload $(WORKLOAD) \
+		--out $(SYNTH_DIR)
+
+gls: synth
+	mkdir -p reports/gls waves
+	ln -sfn "$(CURDIR)" $(POWER_SIM_SRC_LINK)
+	rm -rf $(GLS_OBJ)
+	$(VERILATOR) --cc --exe --build --sv -Wall --trace-vcd $(VERILATOR_GLS_WARNINGS) \
+		--Mdir $(GLS_OBJ) \
+		-CFLAGS "-std=c++17 -Wno-unknown-warning-option" \
+		--top-module mobile_cpu_top \
+		$(POWER_SIM_SRC_LINK)/$(SYNTH_NETLIST) \
+		$(POWER_SIM_SRC_LINK)/sim/gate_level_tb.cpp
+	$(GLS_OBJ)/Vmobile_cpu_top \
+		+workload=$(WORKLOAD) \
+		+gate-summary=reports/gls/$(WORKLOAD)_gate_summary.md \
+		+gate-wave=waves/$(WORKLOAD)_gate.vcd
+
+techlib-nangate45:
+	$(PYTHON) tools/install_nangate45.py --out third_party/nangate45
+
+synth-mapped: assemble-workload techlib-nangate45
+	$(PYTHON) tools/run_yosys_synth.py \
+		--yosys $(YOSYS) \
+		--program $(WORKLOAD_MEMH) \
+		--workload $(WORKLOAD) \
+		--out $(MAPPED_DIR) \
+		--mapped \
+		--memory-macros \
+		--liberty $(TECHLIB_LIBERTY) \
+		--macro-blackbox macros/memory/instr_rom_blackbox.v \
+		--macro-blackbox macros/memory/data_sram_blackbox.v \
+		--stdcell-sim $(TECHLIB_STDCELL_SIM)
+
+gls-mapped: synth-mapped
+	mkdir -p reports/gls waves
+	ln -sfn "$(CURDIR)" $(POWER_SIM_SRC_LINK)
+	rm -rf $(MAPPED_GLS_OBJ)
+	$(VERILATOR) --cc --exe --build --sv -Wall --trace-vcd $(VERILATOR_GLS_WARNINGS) \
+		--Mdir $(MAPPED_GLS_OBJ) \
+		-CFLAGS "-std=c++17 -Wno-unknown-warning-option" \
+		--top-module mobile_cpu_top \
+		$(POWER_SIM_SRC_LINK)/$(TECHLIB_STDCELL_SIM) \
+		$(POWER_SIM_SRC_LINK)/$(MAPPED_NETLIST) \
+		$(POWER_SIM_SRC_LINK)/rtl/instr_rom.sv \
+		$(POWER_SIM_SRC_LINK)/rtl/data_sram.sv \
+		$(POWER_SIM_SRC_LINK)/sim/gate_level_tb.cpp
+	$(MAPPED_GLS_OBJ)/Vmobile_cpu_top \
+		+program=$(WORKLOAD_MEMH) \
+		+workload=$(WORKLOAD)-$(TECHLIB) \
+		+gate-summary=reports/gls/$(WORKLOAD)_$(TECHLIB)_mapped_gate_summary.md \
+		+gate-wave=waves/$(WORKLOAD)_$(TECHLIB)_mapped_gate.vcd
+
 joules-script: upf
 	mkdir -p $(JOULES_DIR)
 	$(PYTHON) tools/gen_joules.py \
@@ -220,6 +301,57 @@ joules-workload: upf sim-workload-vcd
 		--scheme $(SCHEME) \
 		--out $(DVFS_REPORT_DIR)
 
+2416-synth-characterize: 2416-characterize synth
+	$(PYTHON) tools/characterize_2416_synth.py \
+		--rtl-models $(P2416_MODEL_DIR) \
+		--metrics $(SYNTH_METRICS) \
+		--out $(SYNTH_MODEL_DIR)
+
+2416-synth-validate: 2416-schema 2416-synth-characterize
+	$(PYTHON) tools/validate_2416.py $(SYNTH_MODEL_DIR) --xsd $(P2416_SCHEMA)
+
+2416-synth-power: 2416-synth-validate sim-workload-vcd
+	$(PYTHON) tools/estimate_power_2416.py \
+		--models $(SYNTH_MODEL_DIR) \
+		--tech $(TECH_CONFIG) \
+		--vcd waves/$(WORKLOAD).vcd \
+		--scheme $(SCHEME) \
+		--out $(SYNTH_2416_REPORT_DIR)
+
+2416-stdcell-models: 2416-schema techlib-nangate45
+	$(PYTHON) tools/gen_2416_stdcell.py \
+		--techlib $(TECHLIB_CONFIG) \
+		--out $(STDCELL_MODEL_DIR)
+
+2416-stdcell-validate: 2416-stdcell-models
+	$(PYTHON) tools/validate_2416.py $(STDCELL_MODEL_DIR) --xsd $(P2416_SCHEMA)
+
+2416-memory-macros: 2416-schema
+	$(PYTHON) tools/gen_memory_macro_2416.py \
+		--config $(MEMORY_MACRO_CONFIG) \
+		--out $(MEMORY_MACRO_MODEL_DIR)
+
+2416-memory-macro-validate: 2416-memory-macros
+	$(PYTHON) tools/validate_2416.py $(MEMORY_MACRO_MODEL_DIR) --xsd $(P2416_SCHEMA)
+
+2416-mapped-power: 2416-stdcell-models 2416-memory-macros sim-workload-vcd gls-mapped
+	$(PYTHON) tools/estimate_mapped_power_2416.py \
+		--metrics $(MAPPED_METRICS) \
+		--stdcells $(STDCELL_SUMMARY) \
+		--memory-macros $(MEMORY_MACRO_CONFIG) \
+		--tech $(TECH_CONFIG) \
+		--rtl-vcd waves/$(WORKLOAD).vcd \
+		--gate-vcd waves/$(WORKLOAD)_$(TECHLIB)_mapped_gate.vcd \
+		--scheme $(SCHEME) \
+		--out $(MAPPED_2416_REPORT_DIR)
+
+2416-compare-abstractions: 2416-power 2416-synth-power 2416-mapped-power
+	$(PYTHON) tools/compare_2416_abstractions.py \
+		--case rtl:$(P2416_REPORT_DIR) \
+		--case synth:$(SYNTH_2416_REPORT_DIR) \
+		--case mapped:$(MAPPED_2416_REPORT_DIR) \
+		--out $(ABSTRACTION_COMPARE_DIR)
+
 waves:
 	@if [ -n "$(SURFER)" ]; then \
 		"$(SURFER)" --command-file "$(SURFER_COMMAND_FILE)" "$(WAVE_FILE)"; \
@@ -234,4 +366,4 @@ waves-workload:
 	$(MAKE) waves WAVE_FILE="$(abspath waves/$(WORKLOAD).fst)"
 
 clean:
-	rm -rf upf reports build waves $(POWER_SIM_INC) $(POWER_SIM_OBJ) $(POWER_SIM_OBJ_VCD) $(POWER_SIM_SRC_LINK)
+	rm -rf upf reports build waves $(POWER_SIM_INC) $(POWER_SIM_OBJ) $(POWER_SIM_OBJ_VCD) $(GLS_OBJ) $(MAPPED_GLS_OBJ) $(POWER_SIM_SRC_LINK)

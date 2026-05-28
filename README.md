@@ -6,7 +6,8 @@ a toy mobile CPU. It includes:
 - Simple SystemVerilog RTL split into blocks that map cleanly to power domains.
 - JSON power-scheme descriptions.
 - Automatic UPF generation for each scheme.
-- A lightweight power-estimation script for comparing schemes early in the flow.
+- IEEE 2416-style RTL, synthesis-calibrated, and mapped standard-cell power
+  model flows.
 
 The UPF is intentionally tool-neutral IEEE 1801-style Tcl. Commercial flows often
 need small command or naming adjustments, but the generated files capture the
@@ -18,6 +19,8 @@ states for each scheme.
 ```text
 rtl/             Toy mobile CPU RTL
 power_schemes/   JSON descriptions of power optimization schemes
+configs/         Technology, DVFS, and memory-macro assumptions
+macros/          Synthesis blackboxes for implementation-style macros
 tools/           UPF generation and exploration scripts
 upf/             Generated UPF output
 docs/            Architecture notes
@@ -129,6 +132,31 @@ Explore DVFS operating points for one workload:
 make 2416-dvfs-explore WORKLOAD=memory_burst TECH=generic_7nm SCHEME=dvfs_retention_domains
 ```
 
+Synthesize the CPU with Yosys and run functional gate-level simulation:
+
+```sh
+make synth WORKLOAD=memory_burst
+make gls WORKLOAD=memory_burst
+```
+
+Generate synthesis-calibrated IEEE 2416 models and power estimates:
+
+```sh
+make 2416-synth-power WORKLOAD=memory_burst TECH=generic_7nm
+```
+
+Run the mapped standard-cell plus memory-macro flow:
+
+```sh
+make 2416-mapped-power WORKLOAD=memory_burst TECH=generic_7nm
+```
+
+Compare the three abstraction levels:
+
+```sh
+make 2416-compare-abstractions WORKLOAD=memory_burst TECH=generic_7nm
+```
+
 Generated artifacts:
 
 - `upf/*.upf`
@@ -153,6 +181,19 @@ Generated artifacts:
 - `reports/2416/compare_schemes_<workload>_<tech>/2416_compare_energy.svg`
 - `reports/2416/dvfs/<workload>_<tech>_<scheme>/dvfs_summary.md`
 - `reports/2416/dvfs/<workload>_<tech>_<scheme>/dvfs_contributors.svg`
+- `build/synth/<workload>/mobile_cpu_gate.v`
+- `build/synth/<workload>/mobile_cpu_synth_metrics.md`
+- `waves/<workload>_gate.vcd`
+- `reports/gls/<workload>_gate_summary.md`
+- `power_models/mobile_cpu/synth/*.xml`
+- `reports/2416_synth/<workload>_<tech>/2416_power_summary.md`
+- `power_models/stdcells/nangate45/*.xml`
+- `power_models/mobile_cpu/macros/*.xml`
+- `build/mapped/nangate45/<workload>/mobile_cpu_mapped.v`
+- `build/mapped/nangate45/<workload>/mobile_cpu_mapped_metrics.md`
+- `waves/<workload>_nangate45_mapped_gate.vcd`
+- `reports/2416_mapped/nangate45/<workload>_<tech>/2416_power_summary.md`
+- `reports/2416_compare/<workload>_<tech>_nangate45/2416_abstraction_compare.md`
 
 ## Power-Aware Simulation
 
@@ -168,8 +209,8 @@ scheme that generates UPF, converts it into simulation metadata, and checks:
 - level-shifter coverage for voltage-crossing states.
 
 This is not a replacement for commercial IEEE 1801 signoff in tools such as
-Questa, VCS, or Xcelium. It is an educational and interview-ready model of the
-same low-power verification ideas using open-source tooling.
+Questa, VCS, or Xcelium. It is an educational model of the same low-power
+verification ideas using open-source tooling.
 
 ## Workload Flow
 
@@ -225,6 +266,33 @@ OPPs in `configs/dvfs/mobile_cpu_opps.json` and reports energy, average power,
 runtime, energy-delay product, and leakage/clock/event/toggle contributor
 breakdowns. The normal Joules collateral flow is unchanged; this is an
 additional open-source estimator path.
+
+## Synthesis And Gate-Level Simulation
+
+The `synth` target uses Yosys to create a post-synthesis Verilog netlist for
+the CPU. It generates a workload-specific instruction ROM, emits a Yosys JSON
+netlist, and extracts block-level synthesis metrics.
+
+The `gls` target compiles the synthesized netlist with Verilator and performs a
+functional gate-level simulation. The first GLS phase checks externally visible
+CPU behavior, not SDF timing.
+
+The `2416-synth-power` target turns the Yosys metrics into
+`synthesisCalibratedMacro` IEEE 2416 XML models and runs the same estimator
+against workload activity. This creates a clean comparison path:
+
+```text
+RTL 2416 model -> synthesis-calibrated 2416 model -> mapped stdcell + memory macro model
+```
+
+See `docs/synthesis_gate_flow.md` and
+`docs/mapped_stdcell_memory_flow.md` for details.
+
+The mapped flow uses the Nangate45 Liberty file as an open reference standard
+cell library. The large Liberty files are installed locally with
+`make techlib-nangate45` and intentionally ignored by git. Memory blocks are
+kept as ROM/SRAM macros using `macros/memory/*_blackbox.v`, so the mapped model
+does not pretend the SRAM was built from random logic gates.
 
 ## Included Schemes
 

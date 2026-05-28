@@ -1,0 +1,60 @@
+{
+  "name": "mobile_cpu_memory_macros",
+  "description": "Simple implementation-level ROM/SRAM macro assumptions for mapped mobile CPU power estimation.",
+  "reference_voltage_v": 1.10,
+  "macros": [
+    {
+      "block": "instr_rom",
+      "module": "instr_rom",
+      "rtlPath": "TOP.mobile_cpu_top.u_icache",
+      "powerDomain": "PD_CPU",
+      "clock": "none",
+      "description": "64 x 16 instruction ROM kept as a macro during mapped synthesis.",
+      "parameters": {
+        "depth_words": 64,
+        "width_bits": 16,
+        "kind": "rom"
+      },
+      "area_um2": 145.0,
+      "leakage_mw": 0.0032,
+      "retention_leakage_mw": 0.0011,
+      "power_gated_leakage_mw": 0.00008,
+      "events": {
+        "instruction_fetch": {
+          "energy_pj": 0.72,
+          "source": "instruction fetch address sample",
+          "description": "One 16-bit ROM read."
+        }
+      }
+    },
+    {
+      "block": "data_sram",
+      "module": "data_sram",
+      "rtlPath": "TOP.mobile_cpu_top.u_dmem",
+      "powerDomain": "PD_MEM",
+      "clock": "mem",
+      "description": "256 x 32 data SRAM kept as a macro during mapped synthesis.",
+      "parameters": {
+        "depth_words": 256,
+        "width_bits": 32,
+        "kind": "sram"
+      },
+      "area_um2": 1800.0,
+      "leakage_mw": 0.018,
+      "retention_leakage_mw": 0.0065,
+      "power_gated_leakage_mw": 0.00035,
+      "events": {
+        "read": {
+          "energy_pj": 4.8,
+          "source": "mem_req && !mem_we",
+          "description": "One 32-bit SRAM read."
+        },
+        "write": {
+          "energy_pj": 6.3,
+          "source": "mem_req && mem_we",
+          "description": "One 32-bit SRAM write."
+        }
+      }
+    }
+  ]
+}

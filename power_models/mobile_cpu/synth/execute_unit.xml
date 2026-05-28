@@ -1,0 +1,90 @@
+<?xml version='1.0' encoding='utf-8'?>
+<powerModel xmlns="https://standards.ieee.org/ieee/2416/2025/power-model" standard="IEEE2416-2025" schemaVersion="0.1.0" modelClass="synthesisCalibratedMacro" abstractionLevel="gate">
+  <metadata>
+    <name>execute_unit_synth</name>
+    <description>ALU, branch, memory request, and WFI control logic.</description>
+    <generator>tools/characterize_2416_synth.py</generator>
+    <source>mobile_cpu RTL example</source>
+    <provenance>Synthesis-calibrated from RTL IEEE 2416 model coefficients and Yosys block metrics in build/synth/memory_burst/mobile_cpu_synth_metrics.json. Dynamic calibration factor 3.1314; estimated equivalent gates 1230.0.</provenance>
+  </metadata>
+  <design block="execute_unit" module="execute_unit" rtlPath="TOP.mobile_cpu_power_top.u_dut.u_execute" powerDomain="PD_CPU" clock="none">
+    <parameter name="datapath_width" value="32" unit="bit" />
+    <parameter name="synthesis_source" value="build/synth/memory_burst/mobile_cpu_synth.json" unit="path" />
+    <parameter name="synthesis_workload" value="memory_burst" unit="name" />
+    <parameter name="synthesis_cell_count" value="1230" unit="count" />
+    <parameter name="synthesis_comb_cells" value="1230" unit="count" />
+    <parameter name="synthesis_seq_cells" value="0" unit="count" />
+    <parameter name="synthesis_latch_cells" value="0" unit="count" />
+    <parameter name="synthesis_memory_cells" value="0" unit="count" />
+    <parameter name="synthesis_equivalent_gates" value="1230.000" unit="gate" />
+    <parameter name="synthesis_dynamic_calibration" value="3.131365" unit="ratio" />
+    <parameter name="synthesis_leakage_calibration" value="2.918228" unit="ratio" />
+  </design>
+  <operatingConditions>
+    <process nodeNm="7" corner="tt" />
+    <temperature valueC="25.000" />
+    <supply name="VDD_AON" voltageV="0.80000" />
+    <supply name="VDD_CPU_LOW" voltageV="0.60000" />
+    <supply name="VDD_CPU_NOM" voltageV="0.80000" />
+    <supply name="VDD_CPU_TURBO" voltageV="0.95000" />
+    <supply name="VDD_MEM" voltageV="0.80000" />
+    <clock name="top" frequencyMHz="900.000" />
+    <clock name="core" frequencyMHz="900.000" />
+    <clock name="mem" frequencyMHz="900.000" />
+  </operatingConditions>
+  <powerStates>
+    <state name="RUN" supply="VDD_CPU_NOM" clock="combinational" isolation="false" retention="false" leakageMw="0.000304000" />
+    <state name="IDLE" supply="VDD_CPU_LOW" clock="combinational" isolation="false" retention="false" leakageMw="0.000249280" />
+    <state name="LIGHT_SLEEP" supply="VDD_CPU_LOW" clock="combinational" isolation="false" retention="true" leakageMw="0.000085120" />
+    <state name="DEEP_SLEEP" supply="off" clock="combinational" isolation="true" retention="true" leakageMw="0.000004560" />
+    <state name="WAKE" supply="VDD_CPU_NOM" clock="combinational" isolation="false" retention="false" leakageMw="0.000304000" />
+  </powerStates>
+  <activityParameters>
+    <event name="alu_add" source="opcode.ADD" description="ADD operation." />
+    <event name="alu_sub" source="opcode.SUB" description="SUB operation." />
+    <event name="alu_and" source="opcode.AND" description="AND operation." />
+    <event name="alu_or" source="opcode.OR" description="OR operation." />
+    <event name="alu_addi" source="opcode.ADDI" description="ADDI operation." />
+    <event name="branch_compare" source="opcode.BEQ" description="BEQ comparison." />
+    <event name="wait_for_interrupt" source="opcode.WFI" description="WFI idle request." />
+    <signalActivity name="rtl_toggles" source="vcd:TOP.mobile_cpu_power_top.u_dut.u_execute" />
+  </activityParameters>
+  <powerComponents>
+    <component type="leakage" name="leakage_run" ref="RUN" value="0.000887141" unit="mW" voltageScaled="true" />
+    <component type="leakage" name="leakage_idle" ref="IDLE" value="0.000727456" unit="mW" voltageScaled="true" />
+    <component type="leakage" name="leakage_light_sleep" ref="LIGHT_SLEEP" value="0.000248400" unit="mW" voltageScaled="true" />
+    <component type="leakage" name="leakage_deep_sleep" ref="DEEP_SLEEP" value="0.000013307" unit="mW" voltageScaled="true" />
+    <component type="leakage" name="leakage_wake" ref="WAKE" value="0.000887141" unit="mW" voltageScaled="true" />
+    <component type="event" name="alu_add" ref="alu_add" value="0.150305499" unit="pJ" voltageScaled="true" />
+    <component type="event" name="alu_sub" ref="alu_sub" value="0.157820774" unit="pJ" voltageScaled="true" />
+    <component type="event" name="alu_and" ref="alu_and" value="0.063128310" unit="pJ" voltageScaled="true" />
+    <component type="event" name="alu_or" ref="alu_or" value="0.063128310" unit="pJ" voltageScaled="true" />
+    <component type="event" name="alu_addi" ref="alu_addi" value="0.138281059" unit="pJ" voltageScaled="true" />
+    <component type="event" name="branch_compare" ref="branch_compare" value="0.105213849" unit="pJ" voltageScaled="true" />
+    <component type="event" name="wait_for_interrupt" ref="wait_for_interrupt" value="0.007515275" unit="pJ" voltageScaled="true" />
+    <component type="toggle" name="rtl_toggle" ref="rtl_toggles" value="0.000250509" unit="pJ/toggle" voltageScaled="true" />
+  </powerComponents>
+  <powerContributors>
+    <contributor name="static_leakage_run" type="static" domain="PD_CPU" driver="power_state.RUN" componentRef="leakage_run" pvtDependency="process,voltage,temperature" voltageDependency="leakageExponent" frequencyDependency="none" stateDependency="RUN" workloadDependency="state_residency_time" />
+    <contributor name="static_leakage_idle" type="static" domain="PD_CPU" driver="power_state.IDLE" componentRef="leakage_idle" pvtDependency="process,voltage,temperature" voltageDependency="leakageExponent" frequencyDependency="none" stateDependency="IDLE" workloadDependency="state_residency_time" />
+    <contributor name="static_leakage_light_sleep" type="static" domain="PD_CPU" driver="power_state.LIGHT_SLEEP" componentRef="leakage_light_sleep" pvtDependency="process,voltage,temperature" voltageDependency="leakageExponent" frequencyDependency="none" stateDependency="LIGHT_SLEEP" workloadDependency="state_residency_time" />
+    <contributor name="static_leakage_deep_sleep" type="static" domain="PD_CPU" driver="power_state.DEEP_SLEEP" componentRef="leakage_deep_sleep" pvtDependency="process,voltage,temperature" voltageDependency="leakageExponent" frequencyDependency="none" stateDependency="DEEP_SLEEP" workloadDependency="state_residency_time" />
+    <contributor name="static_leakage_wake" type="static" domain="PD_CPU" driver="power_state.WAKE" componentRef="leakage_wake" pvtDependency="process,voltage,temperature" voltageDependency="leakageExponent" frequencyDependency="none" stateDependency="WAKE" workloadDependency="state_residency_time" />
+    <contributor name="event_alu_add" type="event" domain="PD_CPU" driver="opcode.ADD" componentRef="alu_add" pvtDependency="process,voltage" voltageDependency="dynamicExponent" frequencyDependency="event_count" stateDependency="active_domain_power_states" workloadDependency="instruction_mix_or_transaction_count" />
+    <contributor name="event_alu_sub" type="event" domain="PD_CPU" driver="opcode.SUB" componentRef="alu_sub" pvtDependency="process,voltage" voltageDependency="dynamicExponent" frequencyDependency="event_count" stateDependency="active_domain_power_states" workloadDependency="instruction_mix_or_transaction_count" />
+    <contributor name="event_alu_and" type="event" domain="PD_CPU" driver="opcode.AND" componentRef="alu_and" pvtDependency="process,voltage" voltageDependency="dynamicExponent" frequencyDependency="event_count" stateDependency="active_domain_power_states" workloadDependency="instruction_mix_or_transaction_count" />
+    <contributor name="event_alu_or" type="event" domain="PD_CPU" driver="opcode.OR" componentRef="alu_or" pvtDependency="process,voltage" voltageDependency="dynamicExponent" frequencyDependency="event_count" stateDependency="active_domain_power_states" workloadDependency="instruction_mix_or_transaction_count" />
+    <contributor name="event_alu_addi" type="event" domain="PD_CPU" driver="opcode.ADDI" componentRef="alu_addi" pvtDependency="process,voltage" voltageDependency="dynamicExponent" frequencyDependency="event_count" stateDependency="active_domain_power_states" workloadDependency="instruction_mix_or_transaction_count" />
+    <contributor name="event_branch_compare" type="event" domain="PD_CPU" driver="opcode.BEQ" componentRef="branch_compare" pvtDependency="process,voltage" voltageDependency="dynamicExponent" frequencyDependency="event_count" stateDependency="active_domain_power_states" workloadDependency="instruction_mix_or_transaction_count" />
+    <contributor name="event_wait_for_interrupt" type="event" domain="PD_CPU" driver="opcode.WFI" componentRef="wait_for_interrupt" pvtDependency="process,voltage" voltageDependency="dynamicExponent" frequencyDependency="event_count" stateDependency="active_domain_power_states" workloadDependency="instruction_mix_or_transaction_count" />
+    <contributor name="rtl_signal_toggle_activity" type="toggle" domain="PD_CPU" driver="vcd:TOP.mobile_cpu_power_top.u_dut.u_execute" componentRef="rtl_toggle" pvtDependency="process,voltage" voltageDependency="dynamicExponent" frequencyDependency="observed_toggle_rate" stateDependency="active_domain_power_states" workloadDependency="rtl_signal_activity" />
+  </powerContributors>
+  <scaling>
+    <voltage referenceV="0.80000" dynamicExponent="2.000" leakageExponent="1.200" />
+    <temperature referenceC="25.000" leakagePer10cFactor="1.350" />
+  </scaling>
+  <validity>
+    <voltageRange minV="0.48000" maxV="1.09250" />
+    <temperatureRange minC="-40.000" maxC="125.000" />
+  </validity>
+</powerModel>

@@ -1,0 +1,55 @@
+<?xml version='1.0' encoding='utf-8'?>
+<powerModel xmlns="https://standards.ieee.org/ieee/2416/2025/power-model" standard="IEEE2416-2025" schemaVersion="0.1.0" modelClass="implementationMacro" abstractionLevel="physical">
+  <metadata>
+    <name>instr_rom</name>
+    <description>64 x 16 instruction ROM kept as a macro during mapped synthesis.</description>
+    <generator>tools/gen_memory_macro_2416.py</generator>
+    <source>mobile_cpu_memory_macros</source>
+    <provenance>Generated from the mobile CPU memory macro configuration. These are simple macro coefficients used to keep SRAM/ROM behavior distinct from synthesized logic.</provenance>
+  </metadata>
+  <design block="instr_rom" module="instr_rom" rtlPath="TOP.mobile_cpu_top.u_icache" powerDomain="PD_CPU" clock="none">
+    <parameter name="depth_words" value="64" unit="config" />
+    <parameter name="width_bits" value="16" unit="config" />
+    <parameter name="kind" value="rom" unit="config" />
+    <parameter name="area" value="145.000000" unit="um2" />
+  </design>
+  <operatingConditions>
+    <process nodeNm="45" corner="macro_nominal" />
+    <temperature valueC="25.000" />
+    <supply name="VDD_CPU_NOM" voltageV="1.10000" />
+  </operatingConditions>
+  <powerStates>
+    <state name="RUN" supply="VDD_CPU_NOM" clock="combinational" isolation="false" retention="false" leakageMw="0.003200000" />
+    <state name="IDLE" supply="VDD_CPU_NOM" clock="combinational" isolation="false" retention="false" leakageMw="0.002624000" />
+    <state name="LIGHT_SLEEP" supply="VDD_CPU_NOM" clock="combinational" isolation="false" retention="true" leakageMw="0.001100000" />
+    <state name="DEEP_SLEEP" supply="off" clock="combinational" isolation="true" retention="true" leakageMw="0.000080000" />
+    <state name="WAKE" supply="VDD_CPU_NOM" clock="combinational" isolation="false" retention="false" leakageMw="0.003200000" />
+  </powerStates>
+  <activityParameters>
+    <event name="instruction_fetch" source="instruction fetch address sample" description="One 16-bit ROM read." />
+  </activityParameters>
+  <powerComponents>
+    <component type="leakage" name="leakage_run" ref="RUN" value="0.003200000" unit="mW" voltageScaled="true" />
+    <component type="leakage" name="leakage_idle" ref="IDLE" value="0.002624000" unit="mW" voltageScaled="true" />
+    <component type="leakage" name="leakage_light_sleep" ref="LIGHT_SLEEP" value="0.001100000" unit="mW" voltageScaled="true" />
+    <component type="leakage" name="leakage_deep_sleep" ref="DEEP_SLEEP" value="0.000080000" unit="mW" voltageScaled="true" />
+    <component type="leakage" name="leakage_wake" ref="WAKE" value="0.003200000" unit="mW" voltageScaled="true" />
+    <component type="event" name="instruction_fetch" ref="instruction_fetch" value="0.720000000" unit="pJ" voltageScaled="true" />
+  </powerComponents>
+  <powerContributors>
+    <contributor name="static_leakage_run" type="static" domain="PD_CPU" driver="power_state.RUN" componentRef="leakage_run" pvtDependency="process,voltage,temperature" voltageDependency="leakageExponent" frequencyDependency="none" stateDependency="RUN" workloadDependency="state_residency_time" />
+    <contributor name="static_leakage_idle" type="static" domain="PD_CPU" driver="power_state.IDLE" componentRef="leakage_idle" pvtDependency="process,voltage,temperature" voltageDependency="leakageExponent" frequencyDependency="none" stateDependency="IDLE" workloadDependency="state_residency_time" />
+    <contributor name="static_leakage_light_sleep" type="static" domain="PD_CPU" driver="power_state.LIGHT_SLEEP" componentRef="leakage_light_sleep" pvtDependency="process,voltage,temperature" voltageDependency="leakageExponent" frequencyDependency="none" stateDependency="LIGHT_SLEEP" workloadDependency="state_residency_time" />
+    <contributor name="static_leakage_deep_sleep" type="static" domain="PD_CPU" driver="power_state.DEEP_SLEEP" componentRef="leakage_deep_sleep" pvtDependency="process,voltage,temperature" voltageDependency="leakageExponent" frequencyDependency="none" stateDependency="DEEP_SLEEP" workloadDependency="state_residency_time" />
+    <contributor name="static_leakage_wake" type="static" domain="PD_CPU" driver="power_state.WAKE" componentRef="leakage_wake" pvtDependency="process,voltage,temperature" voltageDependency="leakageExponent" frequencyDependency="none" stateDependency="WAKE" workloadDependency="state_residency_time" />
+    <contributor name="event_instruction_fetch" type="event" domain="PD_CPU" driver="instruction fetch address sample" componentRef="instruction_fetch" pvtDependency="process,voltage" voltageDependency="dynamicExponent" frequencyDependency="event_count" stateDependency="active_domain_power_states" workloadDependency="memory_transaction_count" />
+  </powerContributors>
+  <scaling>
+    <voltage referenceV="1.10000" dynamicExponent="2.000" leakageExponent="1.200" />
+    <temperature referenceC="25.000" leakagePer10cFactor="1.350" />
+  </scaling>
+  <validity>
+    <voltageRange minV="0.60000" maxV="1.32000" />
+    <temperatureRange minC="-40.000" maxC="125.000" />
+  </validity>
+</powerModel>

@@ -16,8 +16,6 @@ module execute_unit (
   output logic                           idle_hint,
   output logic                           retired
 );
-  import mobile_cpu_pkg::*;
-
   logic signed [31:0] imm_ext;
 
   always_comb begin
@@ -36,54 +34,54 @@ module execute_unit (
     retired       = 1'b1;
 
     unique case (decoded.opcode)
-      OP_NOP: begin
+      mobile_cpu_pkg::OP_NOP: begin
       end
 
-      OP_ADD: begin
+      mobile_cpu_pkg::OP_ADD: begin
         wb_en   = 1'b1;
         wb_data = rs1_data + rs2_data;
       end
 
-      OP_SUB: begin
+      mobile_cpu_pkg::OP_SUB: begin
         wb_en   = 1'b1;
         wb_data = rs1_data - rs2_data;
       end
 
-      OP_AND: begin
+      mobile_cpu_pkg::OP_AND: begin
         wb_en   = 1'b1;
         wb_data = rs1_data & rs2_data;
       end
 
-      OP_OR: begin
+      mobile_cpu_pkg::OP_OR: begin
         wb_en   = 1'b1;
         wb_data = rs1_data | rs2_data;
       end
 
-      OP_ADDI: begin
+      mobile_cpu_pkg::OP_ADDI: begin
         wb_en   = 1'b1;
         wb_data = rs1_data + imm_ext;
       end
 
-      OP_LD: begin
+      mobile_cpu_pkg::OP_LD: begin
         wb_en    = 1'b1;
         wb_data  = mem_rdata;
         mem_req  = 1'b1;
         mem_addr = rs1_data + imm_ext;
       end
 
-      OP_ST: begin
+      mobile_cpu_pkg::OP_ST: begin
         mem_req   = 1'b1;
         mem_we    = 1'b1;
         mem_addr  = rs1_data + imm_ext;
         mem_wdata = rs2_data;
       end
 
-      OP_BEQ: begin
+      mobile_cpu_pkg::OP_BEQ: begin
         branch_taken  = (rs1_data == rs2_data);
         branch_target = pc + (imm_ext <<< 2);
       end
 
-      OP_WFI: begin
+      mobile_cpu_pkg::OP_WFI: begin
         idle_hint = 1'b1;
       end
 
@@ -93,4 +91,3 @@ module execute_unit (
     endcase
   end
 endmodule
-

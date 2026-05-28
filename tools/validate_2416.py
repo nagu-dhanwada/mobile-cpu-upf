@@ -192,6 +192,8 @@ def main() -> None:
 
     for message in messages:
         print(message)
+        if not message.startswith("INFO:"):
+            errors.append(message)
     if errors:
         for error in errors:
             print(error, file=sys.stderr)

@@ -15,6 +15,10 @@ reports/*_power_sim_*.md
 reports/power_sim_*.json
 reports/power_sim_*.md
 reports/2416/
+reports/2416_synth/
+reports/2416_mapped/
+reports/2416_compare/
+reports/gls/
 reports/joules/
 work/
 waves/
@@ -24,3 +28,10 @@ simv*
 *.log
 *.jou
 *.rpt
+power_models/stdcells/
+
+# Locally installed open-source/reference technology files.
+third_party/nangate45/NangateOpenCellLibrary*.lib
+third_party/nangate45/NangateOpenCellLibrary*.v
+third_party/nangate45/OpenCellLibraryLicenseSi2.txt
+third_party/nangate45/install_manifest.json
