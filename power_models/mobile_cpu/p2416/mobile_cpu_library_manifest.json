@@ -1,0 +1,18 @@
+{
+  "library": "mobile_cpu_p2416",
+  "version": "0.1.0",
+  "technology": "generic_7nm",
+  "tech_config": "configs/tech/generic_7nm.json",
+  "xml": "power_models/mobile_cpu/p2416/mobile_cpu_library.xml",
+  "cells": [
+    "fetch_unit",
+    "instr_rom",
+    "decode_unit",
+    "regfile",
+    "execute_unit",
+    "data_sram",
+    "power_controller"
+  ],
+  "cell_count": 7,
+  "format": "OpenLowPower IEEE 2416 Library"
+}

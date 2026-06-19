@@ -7,6 +7,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+OPENLOWPOWER_XSD = Path.home() / "Downloads" / "2416.xsd"
 
 
 TINY_VCD = """$version test $end
@@ -258,6 +259,79 @@ class IEEE2416FlowTest(unittest.TestCase):
             self.assertTrue((out / "2416_compare_summary.md").exists())
             self.assertTrue((out / "2416_compare_energy.svg").exists())
             self.assertIn("case_b", (out / "2416_compare.csv").read_text(encoding="utf-8"))
+
+    def test_openlowpower_p2416_library_generation_and_estimation(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            library = tmp_path / "mobile_cpu_library.xml"
+            report_dir = tmp_path / "reports"
+            vcd = tmp_path / "tiny.vcd"
+            vcd.write_text(TINY_VCD, encoding="utf-8")
+
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "tools" / "p2416" / "characterize.py"),
+                    "--tech",
+                    str(ROOT / "configs" / "tech" / "generic_7nm.json"),
+                    "--out",
+                    str(library),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "tools" / "p2416" / "validate.py"),
+                    str(library),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            if OPENLOWPOWER_XSD.exists():
+                subprocess.run(
+                    [
+                        sys.executable,
+                        str(ROOT / "tools" / "p2416" / "validate.py"),
+                        str(library),
+                        "--xsd",
+                        str(OPENLOWPOWER_XSD),
+                    ],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                )
+
+            xml = library.read_text(encoding="utf-8")
+            self.assertIn('xmlns="OpenLowPower"', xml)
+            self.assertIn('<Cell name="execute_unit"', xml)
+            self.assertIn('<Events>', xml)
+            self.assertIn('<States units="mW"', xml)
+
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "tools" / "p2416" / "estimate.py"),
+                    "--model",
+                    str(library),
+                    "--tech",
+                    str(ROOT / "configs" / "tech" / "generic_7nm.json"),
+                    "--vcd",
+                    str(vcd),
+                    "--out",
+                    str(report_dir),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            estimate = json.loads((report_dir / "2416_power_estimate.json").read_text(encoding="utf-8"))
+            self.assertEqual(estimate["model_format"], "OpenLowPower IEEE 2416 Library")
+            self.assertGreater(estimate["total_energy_pj"], 0.0)
+            self.assertTrue((report_dir / "2416_power_waveform.svg").exists())
 
     def test_dvfs_exploration_report_generation(self):
         with tempfile.TemporaryDirectory() as tmp:

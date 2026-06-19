@@ -26,6 +26,9 @@ P2416_SPEC ?= spec_model/ieee2416_2025_schema.json
 P2416_SCHEMA ?= schemas/ieee2416-2025.xsd
 P2416_MODEL_DIR ?= power_models/mobile_cpu/rtl
 P2416_REPORT_DIR ?= reports/2416/$(WORKLOAD)_$(TECH)
+OPENLOWPOWER_2416_XSD ?= $(HOME)/Downloads/2416.xsd
+OPENLOWPOWER_2416_MODEL ?= power_models/mobile_cpu/p2416/mobile_cpu_library.xml
+OPENLOWPOWER_2416_REPORT_DIR ?= reports/p2416/$(WORKLOAD)_$(TECH)_$(SCHEME)
 P2416_WORKLOADS ?= alu_idle compute_burst memory_burst
 P2416_SCHEMES ?= baseline_always_on clock_gated_idle core_power_gated_sleep dvfs_retention_domains
 DVFS_OPPS ?= configs/dvfs/mobile_cpu_opps.json
@@ -68,7 +71,7 @@ RTL_FILES := \
 VERILATOR_WARNINGS := -Wno-UNUSEDSIGNAL -Wno-COMBDLY
 VERILATOR_GLS_WARNINGS := $(VERILATOR_WARNINGS) -Wno-DECLFILENAME -Wno-LATCH
 
-.PHONY: upf explore test lint-rtl assemble-workload sim-power sim-power-vcd sim-workload sim-workload-vcd synth gls synth-mapped gls-mapped techlib-nangate45 2416-stdcell-models 2416-stdcell-validate 2416-memory-macros 2416-memory-macro-validate joules-script joules-input joules-workload 2416-schema 2416-characterize 2416-validate 2416-activity 2416-power 2416-compare-workloads 2416-compare-schemes 2416-dvfs-explore 2416-synth-characterize 2416-synth-validate 2416-synth-power 2416-mapped-power 2416-compare-abstractions waves waves-workload clean
+.PHONY: upf explore test lint-rtl assemble-workload sim-power sim-power-vcd sim-workload sim-workload-vcd synth gls synth-mapped gls-mapped techlib-nangate45 2416-stdcell-models 2416-stdcell-validate 2416-memory-macros 2416-memory-macro-validate joules-script joules-input joules-workload 2416-schema 2416-characterize 2416-validate 2416-activity 2416-power 2416-compare-workloads 2416-compare-schemes 2416-dvfs-explore 2416-synth-characterize 2416-synth-validate 2416-synth-power 2416-mapped-power 2416-compare-abstractions p2416-characterize p2416-validate p2416-power waves waves-workload clean
 
 upf:
 	$(PYTHON) tools/gen_upf.py --schemes power_schemes --out upf
@@ -351,6 +354,24 @@ joules-workload: upf sim-workload-vcd
 		--case synth:$(SYNTH_2416_REPORT_DIR) \
 		--case mapped:$(MAPPED_2416_REPORT_DIR) \
 		--out $(ABSTRACTION_COMPARE_DIR)
+
+p2416-characterize:
+	$(PYTHON) tools/p2416/characterize.py \
+		--tech $(TECH_CONFIG) \
+		--out $(OPENLOWPOWER_2416_MODEL)
+
+p2416-validate: p2416-characterize
+	$(PYTHON) tools/p2416/validate.py \
+		$(OPENLOWPOWER_2416_MODEL) \
+		--xsd $(OPENLOWPOWER_2416_XSD)
+
+p2416-power: p2416-validate sim-workload-vcd
+	$(PYTHON) tools/p2416/estimate.py \
+		--model $(OPENLOWPOWER_2416_MODEL) \
+		--tech $(TECH_CONFIG) \
+		--vcd waves/$(WORKLOAD).vcd \
+		--scheme $(SCHEME) \
+		--out $(OPENLOWPOWER_2416_REPORT_DIR)
 
 waves:
 	@if [ -n "$(SURFER)" ]; then \

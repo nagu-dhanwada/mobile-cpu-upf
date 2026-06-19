@@ -8,6 +8,8 @@ a toy mobile CPU. It includes:
 - Automatic UPF generation for each scheme.
 - IEEE 2416-style RTL, synthesis-calibrated, and mapped standard-cell power
   model flows.
+- OpenLowPower IEEE 2416 `Library` generation and validation against a complete
+  XSD supplied by the user.
 
 The UPF is intentionally tool-neutral IEEE 1801-style Tcl. Commercial flows often
 need small command or naming adjustments, but the generated files capture the
@@ -114,6 +116,23 @@ This generates a reference XSD, characterizes XML power models for the CPU
 blocks, validates those models, runs the workload VCD simulation, and writes
 power reports under `reports/2416/memory_burst_generic_7nm/`.
 
+Run the schema-driven OpenLowPower IEEE 2416 library flow:
+
+```sh
+make p2416-power WORKLOAD=memory_burst TECH=generic_7nm SCHEME=dvfs_retention_domains
+```
+
+By default this validates against `$HOME/Downloads/2416.xsd`. Override the XSD
+path when needed:
+
+```sh
+make p2416-validate OPENLOWPOWER_2416_XSD=/path/to/2416.xsd
+```
+
+This newer path writes a single `Library` XML containing `Cell` models for the
+CPU blocks, validates it against the OpenLowPower XSD, and then estimates power
+from the workload VCD. See `docs/openlowpower_2416_flow.md`.
+
 Generate visual workload comparison charts:
 
 ```sh
@@ -175,8 +194,11 @@ Generated artifacts:
 - `build/joules/<workload>_run_joules_power.tcl`
 - `schemas/ieee2416-2025.xsd`
 - `power_models/mobile_cpu/rtl/*.xml`
+- `power_models/mobile_cpu/p2416/mobile_cpu_library.xml`
 - `reports/2416/<workload>_<tech>/2416_power_summary.md`
 - `reports/2416/<workload>_<tech>/2416_power_waveform.svg`
+- `reports/p2416/<workload>_<tech>_<scheme>/2416_power_summary.md`
+- `reports/p2416/<workload>_<tech>_<scheme>/2416_power_waveform.svg`
 - `reports/2416/compare_workloads_<tech>_<scheme>/2416_compare_energy.svg`
 - `reports/2416/compare_schemes_<workload>_<tech>/2416_compare_energy.svg`
 - `reports/2416/dvfs/<workload>_<tech>_<scheme>/dvfs_summary.md`
