@@ -1,0 +1,15 @@
+{
+  "name": "sleep_wake_probe",
+  "description": "Synthetic probe with short work bursts separated by WFI hints for wakeup and residency studies.",
+  "intent": {
+    "profile": "sleep_wake",
+    "alu_chains": 2,
+    "dependency_depth": 2,
+    "memory_pairs": 2,
+    "dataflow_macs": 0,
+    "branch_probes": 1,
+    "idle_windows": 4
+  },
+  "max_instructions": 64
+}
+

@@ -28,6 +28,7 @@ upf/             Generated UPF output
 docs/            Architecture notes
 tests/           Basic generator tests
 workloads/       Small assembly workloads for the CPU model
+workload_specs/  High-level specs for generated synthetic workloads
 ```
 
 ## Quick Start
@@ -88,6 +89,31 @@ Open that workload waveform:
 ```sh
 make waves-workload WORKLOAD=memory_burst
 ```
+
+Generate a synthetic workload from a high-level intent spec:
+
+```sh
+make gen-workload GEN_WORKLOAD=dataflow_energy_probe
+```
+
+This reads `workload_specs/dataflow_energy_probe.json`, writes generated
+assembly under `workloads/generated/`, and records the resolved instruction mix
+under `build/workloadgen/dataflow_energy_probe/`.
+
+Assemble and simulate that generated workload:
+
+```sh
+make assemble-generated GEN_WORKLOAD=dataflow_energy_probe
+make sim-generated GEN_WORKLOAD=dataflow_energy_probe SCHEME=dvfs_retention_domains
+```
+
+Profile generated workload energy and instruction behavior:
+
+```sh
+make profile-generated GEN_WORKLOAD=dataflow_energy_probe TECH=generic_7nm SCHEME=dvfs_retention_domains
+```
+
+See `docs/workload_generation.md` for the intent format and supported profiles.
 
 Generate a VCD and Cadence Joules RTL power-analysis starter script:
 
@@ -206,6 +232,7 @@ Generated artifacts:
 - `build/joules/run_joules_power.tcl`
 - `build/workloads/*.memh`
 - `build/workloads/*.lst`
+- `build/workloadgen/<name>/workload_intent.json`
 - `waves/<workload>.fst`
 - `waves/<workload>.vcd`
 - `build/joules/<workload>_run_joules_power.tcl`

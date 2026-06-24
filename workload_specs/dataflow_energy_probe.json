@@ -1,0 +1,15 @@
+{
+  "name": "dataflow_energy_probe",
+  "description": "Dataflow-heavy synthetic probe for comparing CPU activity, MMIO traffic, and dataflow MAC energy.",
+  "intent": {
+    "profile": "dataflow_heavy",
+    "alu_chains": 1,
+    "dependency_depth": 2,
+    "memory_pairs": 1,
+    "dataflow_macs": 4,
+    "branch_probes": 1,
+    "idle_windows": 2
+  },
+  "max_instructions": 64
+}
+

@@ -9,9 +9,9 @@
 
 reset 4
 
-# Let the selected program execute. The provided workloads end with WFI, which
-# should produce an IDLE visit and clock-gating behavior.
-run 20
+# Let the selected program execute. Hand-written and generated workloads end
+# with WFI, which should produce an IDLE visit and clock-gating behavior.
+run 48
 expect_seen_mode IDLE
 
 # Exercise DVFS turbo and nominal transitions.
@@ -38,4 +38,3 @@ run 3
 pulse wake_irq 1
 run 1
 expect power_mode RUN
-

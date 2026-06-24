@@ -12,6 +12,7 @@ __pycache__/
 build/
 reports/*_power_sim_*.json
 reports/*_power_sim_*.md
+reports/generated/
 reports/power_sim_*.json
 reports/power_sim_*.md
 reports/2416/
@@ -23,6 +24,7 @@ reports/gls/
 reports/joules/
 work/
 waves/
+workloads/generated/
 simv*
 *.vcd
 *.fst

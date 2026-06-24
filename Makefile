@@ -13,6 +13,10 @@ SCENARIO ?= power_modes
 WORKLOAD_ASM ?= workloads/$(WORKLOAD).s
 WORKLOAD_MEMH ?= build/workloads/$(WORKLOAD).memh
 WORKLOAD_LISTING ?= build/workloads/$(WORKLOAD).lst
+GEN_WORKLOAD ?= dataflow_energy_probe
+GEN_WORKLOAD_SPEC ?= workload_specs/$(GEN_WORKLOAD).json
+GEN_WORKLOAD_OUT ?= workloads/generated
+GEN_WORKLOAD_MANIFEST_DIR ?= build/workloadgen
 SCENARIO_FILE ?= sim/scenarios/$(SCENARIO).tcl
 POWER_SIM_DIR ?= build/power_sim
 POWER_SIM_INC ?= /private/tmp/mobile_cpu_upf_power_sim_inc
@@ -73,7 +77,7 @@ RTL_FILES := \
 VERILATOR_WARNINGS := -Wno-UNUSEDSIGNAL -Wno-COMBDLY
 VERILATOR_GLS_WARNINGS := $(VERILATOR_WARNINGS) -Wno-DECLFILENAME -Wno-LATCH -Wno-UNOPTFLAT
 
-.PHONY: upf explore test lint-rtl assemble-workload sim-power sim-power-vcd sim-workload sim-workload-vcd synth gls synth-mapped gls-mapped techlib-nangate45 2416-stdcell-models 2416-stdcell-validate 2416-memory-macros 2416-memory-macro-validate joules-script joules-input joules-workload 2416-schema 2416-characterize 2416-validate 2416-activity 2416-power 2416-compare-workloads 2416-compare-schemes 2416-dvfs-explore 2416-synth-characterize 2416-synth-validate 2416-synth-power 2416-mapped-power 2416-compare-abstractions p2416-characterize p2416-validate p2416-power profile-workload compare-dataflow waves waves-workload clean
+.PHONY: upf explore test lint-rtl gen-workload assemble-generated sim-generated sim-generated-vcd profile-generated assemble-workload sim-power sim-power-vcd sim-workload sim-workload-vcd synth gls synth-mapped gls-mapped techlib-nangate45 2416-stdcell-models 2416-stdcell-validate 2416-memory-macros 2416-memory-macro-validate joules-script joules-input joules-workload 2416-schema 2416-characterize 2416-validate 2416-activity 2416-power 2416-compare-workloads 2416-compare-schemes 2416-dvfs-explore 2416-synth-characterize 2416-synth-validate 2416-synth-power 2416-mapped-power 2416-compare-abstractions p2416-characterize p2416-validate p2416-power profile-workload compare-dataflow waves waves-workload clean
 
 upf:
 	$(PYTHON) tools/gen_upf.py --schemes power_schemes --out upf
@@ -90,6 +94,24 @@ lint-rtl:
 assemble-workload:
 	mkdir -p build/workloads
 	$(PYTHON) tools/asm.py $(WORKLOAD_ASM) --memh $(WORKLOAD_MEMH) --listing $(WORKLOAD_LISTING)
+
+gen-workload:
+	$(PYTHON) tools/gen_workload.py \
+		--spec $(GEN_WORKLOAD_SPEC) \
+		--out $(GEN_WORKLOAD_OUT) \
+		--manifest-dir $(GEN_WORKLOAD_MANIFEST_DIR)
+
+assemble-generated: gen-workload
+	$(MAKE) assemble-workload WORKLOAD=generated/$(GEN_WORKLOAD)
+
+sim-generated: gen-workload
+	$(MAKE) sim-workload WORKLOAD=generated/$(GEN_WORKLOAD) SCHEME=$(SCHEME) SCENARIO=$(SCENARIO)
+
+sim-generated-vcd: gen-workload
+	$(MAKE) sim-workload-vcd WORKLOAD=generated/$(GEN_WORKLOAD) SCHEME=$(SCHEME) SCENARIO=$(SCENARIO)
+
+profile-generated: gen-workload
+	$(MAKE) profile-workload WORKLOAD=generated/$(GEN_WORKLOAD) TECH=$(TECH) SCHEME=$(SCHEME)
 
 sim-power:
 	$(PYTHON) tools/gen_power_sim.py --scheme $(SCHEME) --schemes power_schemes --out $(POWER_SIM_DIR)
@@ -130,6 +152,7 @@ sim-power-vcd:
 sim-workload: assemble-workload
 	$(PYTHON) tools/gen_power_sim.py --scheme $(SCHEME) --schemes power_schemes --out $(POWER_SIM_DIR)
 	mkdir -p reports waves $(POWER_SIM_INC)
+	mkdir -p "$(dir reports/$(WORKLOAD)_power_sim_events.json)" "$(dir waves/$(WORKLOAD).fst)"
 	cp $(POWER_SIM_DIR)/power_intent.hpp $(POWER_SIM_INC)/power_intent.hpp
 	ln -sfn "$(CURDIR)" $(POWER_SIM_SRC_LINK)
 	rm -rf $(POWER_SIM_OBJ)
@@ -151,6 +174,7 @@ sim-workload: assemble-workload
 sim-workload-vcd: assemble-workload
 	$(PYTHON) tools/gen_power_sim.py --scheme $(SCHEME) --schemes power_schemes --out $(POWER_SIM_DIR)
 	mkdir -p reports waves $(POWER_SIM_INC)
+	mkdir -p "$(dir reports/$(WORKLOAD)_power_sim_vcd_events.json)" "$(dir waves/$(WORKLOAD).vcd)"
 	cp $(POWER_SIM_DIR)/power_intent.hpp $(POWER_SIM_INC)/power_intent.hpp
 	ln -sfn "$(CURDIR)" $(POWER_SIM_SRC_LINK)
 	rm -rf $(POWER_SIM_OBJ_VCD)
@@ -178,6 +202,7 @@ synth: assemble-workload
 
 gls: synth
 	mkdir -p reports/gls waves
+	mkdir -p "$(dir reports/gls/$(WORKLOAD)_gate_summary.md)" "$(dir waves/$(WORKLOAD)_gate.vcd)"
 	ln -sfn "$(CURDIR)" $(POWER_SIM_SRC_LINK)
 	rm -rf $(GLS_OBJ)
 	$(VERILATOR) --cc --exe --build --sv -Wall --trace-vcd $(VERILATOR_GLS_WARNINGS) \
@@ -209,6 +234,7 @@ synth-mapped: assemble-workload techlib-nangate45
 
 gls-mapped: synth-mapped
 	mkdir -p reports/gls waves
+	mkdir -p "$(dir reports/gls/$(WORKLOAD)_$(TECHLIB)_mapped_gate_summary.md)" "$(dir waves/$(WORKLOAD)_$(TECHLIB)_mapped_gate.vcd)"
 	ln -sfn "$(CURDIR)" $(POWER_SIM_SRC_LINK)
 	rm -rf $(MAPPED_GLS_OBJ)
 	$(VERILATOR) --cc --exe --build --sv -Wall --trace-vcd $(VERILATOR_GLS_WARNINGS) \
