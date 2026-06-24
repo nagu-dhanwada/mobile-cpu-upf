@@ -39,6 +39,13 @@ module mobile_cpu_top (
   logic [31:0] mem_addr;
   logic [31:0] mem_wdata;
   logic [31:0] mem_rdata;
+  logic [31:0] sram_rdata;
+  logic [31:0] dataflow_rdata;
+  logic        dataflow_sel;
+  logic        dataflow_req;
+  logic        dataflow_busy;
+  logic        dataflow_op_valid;
+  logic [31:0] dataflow_result;
   logic        branch_taken;
   logic [31:0] branch_target;
   logic        retired;
@@ -135,15 +142,33 @@ module mobile_cpu_top (
     .retired       (retired)
   );
 
+  assign dataflow_sel = (mem_addr[3:2] == 2'b01);
+  assign dataflow_req = mem_req & dataflow_sel & !iso_mem;
+  assign mem_rdata    = dataflow_sel ? dataflow_rdata : sram_rdata;
+
   data_sram u_dmem (
     .clk     (mem_clk),
     .reset_n (reset_n),
     .enable  (mem_power_gate_n),
-    .req     (mem_req & !iso_mem),
+    .req     (mem_req & !dataflow_sel & !iso_mem),
     .we      (mem_we),
     .addr    (mem_addr),
     .wdata   (mem_wdata),
-    .rdata   (mem_rdata)
+    .rdata   (sram_rdata)
+  );
+
+  dataflow_unit u_dataflow (
+    .clk      (mem_clk),
+    .reset_n  (reset_n),
+    .enable   (cpu_power_gate_n & mem_power_gate_n),
+    .req      (dataflow_req),
+    .we       (mem_we),
+    .addr     (mem_addr[1:0]),
+    .wdata    (mem_wdata),
+    .rdata    (dataflow_rdata),
+    .busy     (dataflow_busy),
+    .op_valid (dataflow_op_valid),
+    .result   (dataflow_result)
   );
 
   assign cpu_sleeping = !core_clk_en || !cpu_power_gate_n;

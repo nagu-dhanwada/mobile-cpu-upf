@@ -563,6 +563,102 @@
       </State>
     </States>
   </Cell>
+  <Cell name="dataflow_unit" condition="generic_7nm_nominal" datagen="estimated">
+    <Pins>
+      <Pin name="VDD" direction="pg" pinType="primaryPower" />
+      <Pin name="VSS" direction="pg" pinType="primaryGround" />
+      <Pin name="clk" direction="input" dataType="bit" pinType="clock" relatedPower="VDD" relatedGround="VSS" />
+      <Pin name="activity" direction="input" dataType="bit" pinType="signal" relatedPower="VDD" relatedGround="VSS" />
+      <Pin name="power_mode" width="[2:0]" direction="input" dataType="integer" pinType="signal" relatedPower="VDD" relatedGround="VSS" />
+      <Pin name="dvfs_level" width="[1:0]" direction="input" dataType="integer" pinType="signal" relatedPower="VDD" relatedGround="VSS" />
+      <Pin name="domain_on" direction="input" dataType="bit" pinType="signal" relatedPower="VDD" relatedGround="VSS" />
+    </Pins>
+    <Modes mutuallyExclusive="true" defaultMode="RUN" initialMode="RUN">
+      <Mode name="RUN" when="power_mode == RUN" value="0">
+        <Expression>mode_is_run &amp;&amp; clock_enabled &amp;&amp; supply_VDD_CPU_NOM</Expression>
+      </Mode>
+      <Mode name="IDLE" when="power_mode == IDLE" value="1">
+        <Expression>mode_is_idle &amp;&amp; clock_gated &amp;&amp; supply_VDD_CPU_LOW</Expression>
+      </Mode>
+      <Mode name="LIGHT_SLEEP" when="power_mode == LIGHT_SLEEP" value="2">
+        <Expression>mode_is_light_sleep &amp;&amp; clock_gated &amp;&amp; supply_VDD_CPU_LOW</Expression>
+      </Mode>
+      <Mode name="DEEP_SLEEP" when="power_mode == DEEP_SLEEP" value="3">
+        <Expression>mode_is_deep_sleep &amp;&amp; clock_gated &amp;&amp; supply_off</Expression>
+      </Mode>
+      <Mode name="WAKE" when="power_mode == WAKE" value="4">
+        <Expression>mode_is_wake &amp;&amp; clock_enabled &amp;&amp; supply_VDD_CPU_NOM</Expression>
+      </Mode>
+    </Modes>
+    <Events>
+      <Event name="clock_cycle" mode="RUN" style="pinTransition" when="mem_clock_enabled &amp;&amp; domain_on" inputPin="clk" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.0864" />
+      </Event>
+      <Event name="operand_write" mode="RUN" style="pinTransition" when="mmio_write_operand &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.0084" />
+      </Event>
+      <Event name="mac_accumulate" mode="RUN" style="pinTransition" when="mmio_command_start &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.192" />
+      </Event>
+      <Event name="accumulator_clear" mode="RUN" style="pinTransition" when="mmio_command_clear &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.0168" />
+      </Event>
+      <Event name="status_read" mode="RUN" style="pinTransition" when="mmio_read_status &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.0024" />
+      </Event>
+      <Event name="result_read" mode="RUN" style="pinTransition" when="mmio_read_result &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.0216" />
+      </Event>
+      <Event name="rtl_toggle" mode="RUN" style="pinTransition" when="vcd_activity &amp;&amp; domain_on &amp;&amp; block == dataflow_unit" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.00008" />
+      </Event>
+    </Events>
+    <ModelParameters>
+      <Parameter name="module" value="dataflow_unit" dataType="string" />
+      <Parameter name="rtl_path" value="TOP.mobile_cpu_power_top.u_dut.u_dataflow" dataType="string" />
+      <Parameter name="power_domain" value="PD_CPU" dataType="string" />
+      <Parameter name="clock_name" value="mem" dataType="string" />
+      <Parameter name="model_class" value="rtl_macro" dataType="string" />
+      <Parameter name="logic_gates" value="460" dataType="integer" />
+      <Parameter name="flop_bits" value="96" dataType="integer" />
+      <Parameter name="sram_bits" value="0" dataType="integer" />
+      <Parameter name="toggle_energy_pj" value="0.00008" dataType="float" />
+      <Parameter name="reference_voltage_v" value="0.8" dataType="float" />
+      <Parameter name="dynamic_voltage_exponent" value="2" dataType="float" />
+      <Parameter name="leakage_voltage_exponent" value="1.2" dataType="float" />
+      <Parameter name="param_operand_width" value="16" dataType="string" />
+      <Parameter name="param_operand_width_unit" value="bit" dataType="string" />
+      <Parameter name="param_accumulator_width" value="32" dataType="string" />
+      <Parameter name="param_accumulator_width_unit" value="bit" dataType="string" />
+    </ModelParameters>
+    <States units="mW" mutuallyExclusive="true">
+      <State name="RUN" when="power_mode == RUN" units="mW">
+        <StaticPower value="0.000512" units="mW" source="VDD" sink="VSS">
+          <Expression>0.000512 * leakage_voltage_scale * leakage_temperature_scale</Expression>
+        </StaticPower>
+      </State>
+      <State name="IDLE" when="power_mode == IDLE" units="mW">
+        <StaticPower value="0.00041984" units="mW" source="VDD" sink="VSS">
+          <Expression>0.00041984 * leakage_voltage_scale * leakage_temperature_scale</Expression>
+        </StaticPower>
+      </State>
+      <State name="LIGHT_SLEEP" when="power_mode == LIGHT_SLEEP" units="mW">
+        <StaticPower value="0.00014336" units="mW" source="VDD" sink="VSS">
+          <Expression>0.00014336 * leakage_voltage_scale * leakage_temperature_scale</Expression>
+        </StaticPower>
+      </State>
+      <State name="DEEP_SLEEP" when="power_mode == DEEP_SLEEP" units="mW">
+        <StaticPower value="0.00000768" units="mW" source="VDD" sink="VSS">
+          <Expression>0.00000768 * leakage_voltage_scale * leakage_temperature_scale</Expression>
+        </StaticPower>
+      </State>
+      <State name="WAKE" when="power_mode == WAKE" units="mW">
+        <StaticPower value="0.000512" units="mW" source="VDD" sink="VSS">
+          <Expression>0.000512 * leakage_voltage_scale * leakage_temperature_scale</Expression>
+        </StaticPower>
+      </State>
+    </States>
+  </Cell>
   <Cell name="power_controller" condition="generic_7nm_nominal" datagen="estimated">
     <Pins>
       <Pin name="VDD" direction="pg" pinType="primaryPower" />

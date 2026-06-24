@@ -156,6 +156,15 @@ class WorkloadAssemblyTest(unittest.TestCase):
             self.assertIn("ST   r4, [r0 + 3]", listing_text)
             self.assertIn("LD   r8, [r0 + 3]", listing_text)
 
+    def test_dataflow_workload_uses_mmio_window(self):
+        assembled = assemble(ROOT / "workloads" / "dataflow_mac.s")
+        words = [word for _, _, word in assembled]
+
+        self.assertIn(0x7606, words)  # ST r6, [r0 + 6] clears the accumulator.
+        self.assertIn(0x7104, words)  # ST r1, [r0 + 4] writes operand A.
+        self.assertIn(0x7205, words)  # ST r2, [r0 + 5] writes operand B.
+        self.assertIn(0x6707, words)  # LD r7, [r0 + 7] reads the accumulated result.
+
 
 class VerilatorPowerSimulationTest(unittest.TestCase):
     @unittest.skipUnless(shutil.which("verilator"), "Verilator is not installed")

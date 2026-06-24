@@ -11,8 +11,9 @@
     "regfile",
     "execute_unit",
     "data_sram",
+    "dataflow_unit",
     "power_controller"
   ],
-  "cell_count": 7,
+  "cell_count": 8,
   "format": "OpenLowPower IEEE 2416 Library"
 }

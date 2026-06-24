@@ -18,6 +18,7 @@ BLOCK_PATHS = {
     "regfile": f"{DUT}.u_regfile",
     "execute_unit": f"{DUT}.u_execute",
     "data_sram": f"{DUT}.u_dmem",
+    "dataflow_unit": f"{DUT}.u_dataflow",
     "power_controller": f"{DUT}.u_power_controller",
 }
 
@@ -38,6 +39,22 @@ OPCODE_EVENTS = {
     0x8: ("execute_unit", "branch_compare"),
     0xF: ("execute_unit", "wait_for_interrupt"),
 }
+
+OPCODE_NAMES = {
+    0x0: "NOP",
+    0x1: "ADD",
+    0x2: "SUB",
+    0x3: "AND",
+    0x4: "OR",
+    0x5: "ADDI",
+    0x6: "LD",
+    0x7: "ST",
+    0x8: "BEQ",
+    0xF: "WFI",
+}
+
+DATAFLOW_MMIO_BASE = 4
+DATAFLOW_MMIO_LIMIT = 7
 
 
 def parse_timescale_ps(line: str) -> float:
@@ -101,6 +118,7 @@ class VcdActivityExtractor:
         self.clock_cycles_by_dvfs: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
         self.event_counts: dict[str, int] = defaultdict(int)
         self.event_counts_by_dvfs: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
+        self.instruction_counts: dict[str, int] = defaultdict(int)
         self.block_toggles: dict[str, int] = defaultdict(int)
         self.mode_transitions: dict[str, int] = defaultdict(int)
         self.state_timeline: list[dict] = []
@@ -289,6 +307,7 @@ class VcdActivityExtractor:
         retired = bit_value(self._value(f"{DUT}.retired"))
         if not retired:
             return
+        self.instruction_counts[OPCODE_NAMES.get(opcode, f"OP_{opcode:x}")] += 1
 
         self._add_event("fetch_unit", "pc_update")
         self._add_event("instr_rom", "instruction_fetch")
@@ -308,13 +327,42 @@ class VcdActivityExtractor:
         if opcode in {0x1, 0x2, 0x3, 0x4, 0x5, 0x6}:
             self._add_event("regfile", "write")
 
+        if opcode in {0x6, 0x7}:
+            self._sample_memory_mapped_event(opcode)
+
+        if opcode == 0x8 and bit_value(self._value(f"{DUT}.branch_taken")):
+            self._add_event("fetch_unit", "branch_redirect")
+
+    def _sample_memory_mapped_event(self, opcode: int) -> None:
+        mem_addr = int_value(self._value(f"{DUT}.mem_addr"))
+        mem_wdata = int_value(self._value(f"{DUT}.mem_wdata"))
+        if DATAFLOW_MMIO_BASE <= mem_addr <= DATAFLOW_MMIO_LIMIT:
+            offset = mem_addr - DATAFLOW_MMIO_BASE
+            if opcode == 0x6:
+                if offset == 2:
+                    self._add_event("dataflow_unit", "status_read")
+                elif offset == 3:
+                    self._add_event("dataflow_unit", "result_read")
+                else:
+                    self._add_event("dataflow_unit", "operand_read")
+            else:
+                if offset in {0, 1}:
+                    self._add_event("dataflow_unit", "operand_write")
+                elif offset == 2:
+                    if mem_wdata & 0x2:
+                        self._add_event("dataflow_unit", "accumulator_clear")
+                    if mem_wdata & 0x1:
+                        self._add_event("dataflow_unit", "mac_accumulate")
+                    if (mem_wdata & 0x3) == 0:
+                        self._add_event("dataflow_unit", "command_write")
+                else:
+                    self._add_event("dataflow_unit", "command_write")
+            return
+
         if opcode == 0x6:
             self._add_event("data_sram", "read")
         elif opcode == 0x7:
             self._add_event("data_sram", "write")
-
-        if opcode == 0x8 and bit_value(self._value(f"{DUT}.branch_taken")):
-            self._add_event("fetch_unit", "branch_redirect")
 
     def _to_dict(self) -> dict:
         return {
@@ -333,6 +381,8 @@ class VcdActivityExtractor:
                 event: dict(sorted(counts.items()))
                 for event, counts in sorted(self.event_counts_by_dvfs.items())
             },
+            "instruction_counts": dict(sorted(self.instruction_counts.items())),
+            "retired_instruction_count": sum(self.instruction_counts.values()),
             "block_toggles": dict(sorted(self.block_toggles.items())),
             "mode_transitions": dict(sorted(self.mode_transitions.items())),
             "state_timeline": self.state_timeline,

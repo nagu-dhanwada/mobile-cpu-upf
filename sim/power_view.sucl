@@ -34,5 +34,11 @@ divider_add Retention
 variable_add TOP.mobile_cpu_power_top.ret_save
 variable_add TOP.mobile_cpu_power_top.ret_restore
 
-zoom_fit
+divider_add Dataflow
+variable_add TOP.mobile_cpu_power_top.u_dut.u_dataflow.operand_a_q
+variable_add TOP.mobile_cpu_power_top.u_dut.u_dataflow.operand_b_q
+variable_add TOP.mobile_cpu_power_top.u_dut.u_dataflow.acc_q
+variable_add TOP.mobile_cpu_power_top.u_dut.dataflow_op_valid
+variable_add TOP.mobile_cpu_power_top.u_dut.dataflow_result
 
+zoom_fit

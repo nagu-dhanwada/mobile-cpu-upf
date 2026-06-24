@@ -160,10 +160,12 @@ class IEEE2416FlowTest(unittest.TestCase):
             )
 
             execute_model = (models / "execute_unit.xml").read_text(encoding="utf-8")
+            dataflow_model = (models / "dataflow_unit.xml").read_text(encoding="utf-8")
             self.assertIn("IEEE2416-2025", execute_model)
             self.assertIn("alu_addi", execute_model)
             self.assertIn("powerContributors", execute_model)
             self.assertIn('componentRef="alu_addi"', execute_model)
+            self.assertIn("mac_accumulate", dataflow_model)
 
     def test_vcd_activity_and_power_estimator(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -308,6 +310,7 @@ class IEEE2416FlowTest(unittest.TestCase):
             xml = library.read_text(encoding="utf-8")
             self.assertIn('xmlns="OpenLowPower"', xml)
             self.assertIn('<Cell name="execute_unit"', xml)
+            self.assertIn('<Cell name="dataflow_unit"', xml)
             self.assertIn('<Events>', xml)
             self.assertIn('<States units="mW"', xml)
 

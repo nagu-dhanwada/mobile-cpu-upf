@@ -79,8 +79,9 @@ make sim-workload WORKLOAD=memory_burst
 
 This assembles `workloads/memory_burst.s`, loads it into `instr_rom.sv` at
 runtime, runs `sim/scenarios/power_modes.tcl`, and writes a workload-specific
-summary and waveform. Use `WORKLOAD=alu_idle`, `WORKLOAD=compute_burst`, or
-add another `.s` file under `workloads/`.
+summary and waveform. Use `WORKLOAD=alu_idle`, `WORKLOAD=compute_burst`,
+`WORKLOAD=memory_burst`, `WORKLOAD=cpu_mac`, `WORKLOAD=dataflow_mac`, or add
+another `.s` file under `workloads/`.
 
 Open that workload waveform:
 
@@ -132,6 +133,22 @@ make p2416-validate OPENLOWPOWER_2416_XSD=/path/to/2416.xsd
 This newer path writes a single `Library` XML containing `Cell` models for the
 CPU blocks, validates it against the OpenLowPower XSD, and then estimates power
 from the workload VCD. See `docs/openlowpower_2416_flow.md`.
+
+Profile architecture-efficiency metrics for a workload:
+
+```sh
+make profile-workload WORKLOAD=dataflow_mac TECH=generic_7nm SCHEME=dvfs_retention_domains
+```
+
+This writes instruction mix, memory intensity, dataflow activity, low-power
+residency, energy-per-instruction, and recovery-energy metrics under the p2416
+report directory.
+
+Compare CPU-only and dataflow-assisted MAC workloads:
+
+```sh
+make compare-dataflow TECH=generic_7nm SCHEME=dvfs_retention_domains
+```
 
 Generate visual workload comparison charts:
 
@@ -199,6 +216,7 @@ Generated artifacts:
 - `reports/2416/<workload>_<tech>/2416_power_waveform.svg`
 - `reports/p2416/<workload>_<tech>_<scheme>/2416_power_summary.md`
 - `reports/p2416/<workload>_<tech>_<scheme>/2416_power_waveform.svg`
+- `reports/p2416/<workload>_<tech>_<scheme>/workload_profile/workload_profile.md`
 - `reports/2416/compare_workloads_<tech>_<scheme>/2416_compare_energy.svg`
 - `reports/2416/compare_schemes_<workload>_<tech>/2416_compare_energy.svg`
 - `reports/2416/dvfs/<workload>_<tech>_<scheme>/dvfs_summary.md`
@@ -260,6 +278,12 @@ That split is useful when explaining the project:
 - the scenario models what the platform power manager asks the chip to do,
 - the power intent JSON/UPF defines which transitions are legal and protected,
 - the Verilator harness checks that the RTL behavior agrees with the intent.
+
+The `cpu_mac` and `dataflow_mac` workloads are paired architecture experiments.
+`cpu_mac` performs a tiny multiply-accumulate style task with repeated ALU
+operations. `dataflow_mac` drives the memory-mapped `u_dataflow` unit through
+ordinary stores and loads, then the profiler compares instruction mix, dataflow
+MAC activity, low-power residency, and energy-per-instruction.
 
 ## IEEE 2416 RTL Power Models
 

@@ -23,6 +23,7 @@ RTL_FILES = [
     "rtl/regfile.sv",
     "rtl/execute_unit.sv",
     "rtl/data_sram.sv",
+    "rtl/dataflow_unit.sv",
     "rtl/mobile_cpu_top.sv",
 ]
 
@@ -34,6 +35,7 @@ RTL_FILES_WITH_MEMORY_MACROS = [
     "rtl/decode_unit.sv",
     "rtl/regfile.sv",
     "rtl/execute_unit.sv",
+    "rtl/dataflow_unit.sv",
     "rtl/mobile_cpu_top.sv",
 ]
 

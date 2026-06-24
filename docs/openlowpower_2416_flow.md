@@ -28,8 +28,8 @@ Default output:
 power_models/mobile_cpu/p2416/mobile_cpu_library.xml
 ```
 
-The XML root is `Library` in the `OpenLowPower` namespace. Each CPU block is a
-`Cell` with:
+The XML root is `Library` in the `OpenLowPower` namespace. Each CPU block,
+including the memory-mapped `dataflow_unit`, is a `Cell` with:
 
 - `Pins` for power, ground, clock, activity, power mode, and DVFS state.
 - `Modes` for `RUN`, `IDLE`, `LIGHT_SLEEP`, `DEEP_SLEEP`, and `WAKE`.
@@ -72,6 +72,30 @@ Important outputs:
 - `2416_power_by_block.svg`
 - `2416_power_by_domain.svg`
 
+## Workload Profiling
+
+The p2416 power result can feed an architecture-efficiency profile:
+
+```sh
+make profile-workload WORKLOAD=dataflow_mac TECH=generic_7nm SCHEME=dvfs_retention_domains
+```
+
+This produces:
+
+```text
+reports/p2416/dataflow_mac_generic_7nm_dvfs_retention_domains/workload_profile/
+```
+
+The profile summarizes instruction mix, memory intensity, dataflow MAC count,
+energy per retired instruction, energy per dataflow MAC, low-power residency,
+and recovery energy after the useful run phase.
+
+For a paired CPU-only versus dataflow-assisted experiment:
+
+```sh
+make compare-dataflow TECH=generic_7nm SCHEME=dvfs_retention_domains
+```
+
 ## Relationship To The Existing Flow
 
 The older `2416-*` targets still generate and consume the repository's compact
@@ -79,4 +103,3 @@ reference XML format. The new `p2416-*` targets generate and consume the
 OpenLowPower `Library` structure from the uploaded XSD. Keeping both flows makes
 it easy to compare a small educational format with the fuller standard-oriented
 model representation while the tooling evolves.
-
