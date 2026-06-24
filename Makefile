@@ -60,6 +60,10 @@ MAPPED_METRICS ?= $(MAPPED_DIR)/mobile_cpu_mapped_metrics.json
 MAPPED_GLS_OBJ ?= /private/tmp/mobile_cpu_upf_mapped_gls_obj
 MAPPED_2416_REPORT_DIR ?= reports/2416_mapped/$(TECHLIB)/$(WORKLOAD)_$(TECH)
 ABSTRACTION_COMPARE_DIR ?= reports/2416_compare/$(WORKLOAD)_$(TECH)_$(TECHLIB)
+VISUAL_STORY_WORKLOADS ?= cpu_mac dataflow_mac
+VISUAL_STORY_GENERATED ?= dataflow_energy_probe sleep_wake_probe
+VISUAL_STORY_CASES ?= cpu_mac dataflow_mac generated/dataflow_energy_probe generated/sleep_wake_probe
+VISUAL_STORY_OUT ?= reports/visual_story/index.html
 
 RTL_FILES := \
 	rtl/mobile_cpu_pkg.sv \
@@ -77,7 +81,7 @@ RTL_FILES := \
 VERILATOR_WARNINGS := -Wno-UNUSEDSIGNAL -Wno-COMBDLY
 VERILATOR_GLS_WARNINGS := $(VERILATOR_WARNINGS) -Wno-DECLFILENAME -Wno-LATCH -Wno-UNOPTFLAT
 
-.PHONY: upf explore test lint-rtl gen-workload assemble-generated sim-generated sim-generated-vcd profile-generated assemble-workload sim-power sim-power-vcd sim-workload sim-workload-vcd synth gls synth-mapped gls-mapped techlib-nangate45 2416-stdcell-models 2416-stdcell-validate 2416-memory-macros 2416-memory-macro-validate joules-script joules-input joules-workload 2416-schema 2416-characterize 2416-validate 2416-activity 2416-power 2416-compare-workloads 2416-compare-schemes 2416-dvfs-explore 2416-synth-characterize 2416-synth-validate 2416-synth-power 2416-mapped-power 2416-compare-abstractions p2416-characterize p2416-validate p2416-power profile-workload compare-dataflow waves waves-workload clean
+.PHONY: upf explore test lint-rtl gen-workload assemble-generated sim-generated sim-generated-vcd profile-generated assemble-workload sim-power sim-power-vcd sim-workload sim-workload-vcd synth gls synth-mapped gls-mapped techlib-nangate45 2416-stdcell-models 2416-stdcell-validate 2416-memory-macros 2416-memory-macro-validate joules-script joules-input joules-workload 2416-schema 2416-characterize 2416-validate 2416-activity 2416-power 2416-compare-workloads 2416-compare-schemes 2416-dvfs-explore 2416-synth-characterize 2416-synth-validate 2416-synth-power 2416-mapped-power 2416-compare-abstractions p2416-characterize p2416-validate p2416-power profile-workload compare-dataflow visual-story-data visual-story open-visual-story waves waves-workload clean
 
 upf:
 	$(PYTHON) tools/gen_upf.py --schemes power_schemes --out upf
@@ -417,6 +421,24 @@ compare-dataflow:
 		--suffix _$(TECH)_$(SCHEME) \
 		--title "CPU vs Dataflow Workload Energy ($(TECH), $(SCHEME))" \
 		--out reports/p2416/compare_dataflow_$(TECH)_$(SCHEME)
+
+visual-story-data:
+	@set -e; for workload in $(VISUAL_STORY_WORKLOADS); do \
+		$(MAKE) profile-workload WORKLOAD=$$workload TECH=$(TECH) SCHEME=$(SCHEME) OPENLOWPOWER_2416_REPORT_DIR=reports/p2416/$${workload}_$(TECH)_$(SCHEME); \
+	done
+	@set -e; for workload in $(VISUAL_STORY_GENERATED); do \
+		$(MAKE) profile-generated GEN_WORKLOAD=$$workload TECH=$(TECH) SCHEME=$(SCHEME); \
+	done
+
+visual-story: visual-story-data
+	$(PYTHON) tools/gen_visual_story.py \
+		--tech $(TECH) \
+		--scheme $(SCHEME) \
+		--out $(VISUAL_STORY_OUT) \
+		$(foreach workload,$(VISUAL_STORY_CASES),--workload $(workload))
+
+open-visual-story: visual-story
+	open "$(abspath $(VISUAL_STORY_OUT))"
 
 waves:
 	@if [ -n "$(SURFER)" ]; then \

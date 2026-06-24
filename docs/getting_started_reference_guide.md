@@ -163,6 +163,29 @@ power-scheme energy/power. The DVFS command additionally writes
 energy, average power, runtime, energy-delay product, and contributor
 breakdown.
 
+## Generate The Visual Walkthrough
+
+```sh
+make visual-story
+```
+
+This command builds a default set of hand-written and generated workloads,
+profiles them through the OpenLowPower IEEE 2416 flow, and writes a standalone
+animated dashboard:
+
+- `reports/visual_story/index.html`
+
+The dashboard shows the CPU datapath, workload cards, an animated power
+timeline, domain energy breakdowns, dominant activity events, and energy
+tradeoff charts. It is generated output and is ignored by Git. The checked-in
+guide is `docs/mobile_cpu_visual_walkthrough.md`.
+
+Open it locally on macOS:
+
+```sh
+make open-visual-story
+```
+
 ## Run Synthesis And Gate-Level Simulation
 
 Install Yosys first if it is not already available:
@@ -263,10 +286,11 @@ Use this order when studying or demonstrating the flow:
    Tcl starter script for an RTL power-analysis flow.
 9. Run `make 2416-power WORKLOAD=memory_burst` to exercise the standards-based
    XML model flow.
-10. Run `make 2416-compare-abstractions WORKLOAD=memory_burst` to compare RTL,
+10. Run `make visual-story` to generate the animated documentation dashboard.
+11. Run `make 2416-compare-abstractions WORKLOAD=memory_burst` to compare RTL,
     synth-calibrated, and mapped power estimates.
-11. Run `make explore` and inspect the summary table.
-12. Run `make test` to check the automation.
+12. Run `make explore` and inspect the summary table.
+13. Run `make test` to check the automation.
 
 ## Current Limitations
 

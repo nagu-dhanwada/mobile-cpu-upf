@@ -115,6 +115,17 @@ make profile-generated GEN_WORKLOAD=dataflow_energy_probe TECH=generic_7nm SCHEM
 
 See `docs/workload_generation.md` for the intent format and supported profiles.
 
+Generate the visual walkthrough dashboard:
+
+```sh
+make visual-story
+```
+
+This builds the default demo workload set, profiles each case through the
+OpenLowPower IEEE 2416 flow, and writes a standalone animated HTML dashboard to
+`reports/visual_story/index.html`. The checked-in guide is
+`docs/mobile_cpu_visual_walkthrough.md`.
+
 Generate a VCD and Cadence Joules RTL power-analysis starter script:
 
 ```sh
@@ -244,6 +255,7 @@ Generated artifacts:
 - `reports/p2416/<workload>_<tech>_<scheme>/2416_power_summary.md`
 - `reports/p2416/<workload>_<tech>_<scheme>/2416_power_waveform.svg`
 - `reports/p2416/<workload>_<tech>_<scheme>/workload_profile/workload_profile.md`
+- `reports/visual_story/index.html`
 - `reports/2416/compare_workloads_<tech>_<scheme>/2416_compare_energy.svg`
 - `reports/2416/compare_schemes_<workload>_<tech>/2416_compare_energy.svg`
 - `reports/2416/dvfs/<workload>_<tech>_<scheme>/dvfs_summary.md`

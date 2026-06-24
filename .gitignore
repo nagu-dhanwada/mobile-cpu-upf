@@ -13,6 +13,7 @@ build/
 reports/*_power_sim_*.json
 reports/*_power_sim_*.md
 reports/generated/
+reports/visual_story/
 reports/power_sim_*.json
 reports/power_sim_*.md
 reports/2416/
