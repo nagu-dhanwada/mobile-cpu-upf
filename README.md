@@ -144,32 +144,35 @@ make joules-workload WORKLOAD=memory_burst
 This creates `waves/memory_burst.vcd` and
 `build/joules/memory_burst_run_joules_power.tcl`.
 
-Run the IEEE 2416 RTL macro-model power flow:
+Run the real-XSD IEEE 2416 power flow:
 
 ```sh
-make 2416-power WORKLOAD=memory_burst TECH=generic_7nm
+make 2416-power WORKLOAD=memory_burst TECH=generic_7nm SCHEME=dvfs_retention_domains
 ```
 
-This generates a reference XSD, characterizes XML power models for the CPU
-blocks, validates those models, runs the workload VCD simulation, and writes
-power reports under `reports/2416/memory_burst_generic_7nm/`.
+This generates an OpenLowPower IEEE 2416 `Library` XML for the CPU blocks,
+validates it against `$HOME/Downloads/2416.xsd` by default, runs the workload
+VCD simulation, and writes power reports under
+`reports/2416/memory_burst_generic_7nm_dvfs_retention_domains/`.
 
-Run the schema-driven OpenLowPower IEEE 2416 library flow:
+Override the XSD path when needed:
 
 ```sh
-make p2416-power WORKLOAD=memory_burst TECH=generic_7nm SCHEME=dvfs_retention_domains
+make 2416-validate OPENLOWPOWER_2416_XSD=/path/to/2416.xsd
 ```
 
-By default this validates against `$HOME/Downloads/2416.xsd`. Override the XSD
-path when needed:
+The older `p2416-*` command names remain as aliases, but the plain `2416-*`
+targets are now the real-XSD path. See `docs/openlowpower_2416_flow.md`.
+
+Run the older legacy/simple XML flow only when you specifically want the
+educational bootstrap format:
 
 ```sh
-make p2416-validate OPENLOWPOWER_2416_XSD=/path/to/2416.xsd
+make legacy2416-power WORKLOAD=memory_burst TECH=generic_7nm
 ```
 
-This newer path writes a single `Library` XML containing `Cell` models for the
-CPU blocks, validates it against the OpenLowPower XSD, and then estimates power
-from the workload VCD. See `docs/openlowpower_2416_flow.md`.
+That legacy path uses `legacy/simple_2416_schema/schema_profile.json` and does
+not represent the full IEEE 2416 XSD.
 
 Profile architecture-efficiency metrics for a workload:
 
@@ -178,8 +181,8 @@ make profile-workload WORKLOAD=dataflow_mac TECH=generic_7nm SCHEME=dvfs_retenti
 ```
 
 This writes instruction mix, memory intensity, dataflow activity, low-power
-residency, energy-per-instruction, and recovery-energy metrics under the p2416
-report directory.
+residency, energy-per-instruction, and recovery-energy metrics under the IEEE
+2416 report directory.
 
 Compare CPU-only and dataflow-assisted MAC workloads:
 
@@ -205,6 +208,9 @@ Explore DVFS operating points for one workload:
 make 2416-dvfs-explore WORKLOAD=memory_burst TECH=generic_7nm SCHEME=dvfs_retention_domains
 ```
 
+DVFS exploration currently uses the legacy/simple estimator internally and
+prints a note when invoked.
+
 Synthesize the CPU with Yosys and run functional gate-level simulation:
 
 ```sh
@@ -217,6 +223,10 @@ Generate synthesis-calibrated IEEE 2416 models and power estimates:
 ```sh
 make 2416-synth-power WORKLOAD=memory_burst TECH=generic_7nm
 ```
+
+Synthesis-calibrated and mapped estimates currently use the legacy/simple XML
+estimator because the real-XSD standard-cell/macro extension is still future
+work.
 
 Run the mapped standard-cell plus memory-macro flow:
 
@@ -247,32 +257,30 @@ Generated artifacts:
 - `waves/<workload>.fst`
 - `waves/<workload>.vcd`
 - `build/joules/<workload>_run_joules_power.tcl`
-- `schemas/ieee2416-2025.xsd`
-- `power_models/mobile_cpu/rtl/*.xml`
-- `power_models/mobile_cpu/p2416/mobile_cpu_library.xml`
-- `reports/2416/<workload>_<tech>/2416_power_summary.md`
-- `reports/2416/<workload>_<tech>/2416_power_waveform.svg`
-- `reports/p2416/<workload>_<tech>_<scheme>/2416_power_summary.md`
-- `reports/p2416/<workload>_<tech>_<scheme>/2416_power_waveform.svg`
-- `reports/p2416/<workload>_<tech>_<scheme>/workload_profile/workload_profile.md`
+- `legacy/simple_2416_schema/generated_schema.xsd`
+- `power_models/mobile_cpu/legacy2416/rtl/*.xml`
+- `power_models/mobile_cpu/ieee2416/mobile_cpu_library.xml`
+- `reports/2416/<workload>_<tech>_<scheme>/2416_power_summary.md`
+- `reports/2416/<workload>_<tech>_<scheme>/2416_power_waveform.svg`
+- `reports/2416/<workload>_<tech>_<scheme>/workload_profile/workload_profile.md`
 - `reports/visual_story/index.html`
 - `reports/2416/compare_workloads_<tech>_<scheme>/2416_compare_energy.svg`
 - `reports/2416/compare_schemes_<workload>_<tech>/2416_compare_energy.svg`
-- `reports/2416/dvfs/<workload>_<tech>_<scheme>/dvfs_summary.md`
-- `reports/2416/dvfs/<workload>_<tech>_<scheme>/dvfs_contributors.svg`
+- `reports/legacy2416/dvfs/<workload>_<tech>_<scheme>/dvfs_summary.md`
+- `reports/legacy2416/dvfs/<workload>_<tech>_<scheme>/dvfs_contributors.svg`
 - `build/synth/<workload>/mobile_cpu_gate.v`
 - `build/synth/<workload>/mobile_cpu_synth_metrics.md`
 - `waves/<workload>_gate.vcd`
 - `reports/gls/<workload>_gate_summary.md`
-- `power_models/mobile_cpu/synth/*.xml`
-- `reports/2416_synth/<workload>_<tech>/2416_power_summary.md`
+- `power_models/mobile_cpu/legacy2416/synth/*.xml`
+- `reports/legacy2416_synth/<workload>_<tech>/2416_power_summary.md`
 - `power_models/stdcells/nangate45/*.xml`
-- `power_models/mobile_cpu/macros/*.xml`
+- `power_models/mobile_cpu/legacy2416/macros/*.xml`
 - `build/mapped/nangate45/<workload>/mobile_cpu_mapped.v`
 - `build/mapped/nangate45/<workload>/mobile_cpu_mapped_metrics.md`
 - `waves/<workload>_nangate45_mapped_gate.vcd`
-- `reports/2416_mapped/nangate45/<workload>_<tech>/2416_power_summary.md`
-- `reports/2416_compare/<workload>_<tech>_nangate45/2416_abstraction_compare.md`
+- `reports/legacy2416_mapped/nangate45/<workload>_<tech>/2416_power_summary.md`
+- `reports/legacy2416_compare/<workload>_<tech>_nangate45/2416_abstraction_compare.md`
 
 ## Power-Aware Simulation
 
@@ -324,11 +332,11 @@ operations. `dataflow_mac` drives the memory-mapped `u_dataflow` unit through
 ordinary stores and loads, then the profiler compares instruction mix, dataflow
 MAC activity, low-power residency, and energy-per-instruction.
 
-## IEEE 2416 RTL Power Models
+## IEEE 2416 Power Models
 
-The `2416-power` target turns the CPU into a small standards-based power
-modeling platform. It creates XML macro models for the RTL blocks, validates
-them against `schemas/ieee2416-2025.xsd`, extracts activity from a VCD, and
+The `2416-power` target is the primary standards-oriented path. It creates an
+OpenLowPower IEEE 2416 `Library` XML for the RTL blocks, validates it against
+the XSD supplied with `OPENLOWPOWER_2416_XSD`, extracts activity from a VCD, and
 estimates energy/power by block and power domain.
 
 The first model abstraction is:
@@ -341,16 +349,16 @@ Energy =
   + optional RTL toggle energy
 ```
 
-See `docs/ieee2416_rtl_power_flow.md` for the full walkthrough.
+See `docs/openlowpower_2416_flow.md` for the full walkthrough.
 
 The estimator also writes SVG charts, including a stacked domain power waveform
 for each run and bar charts for workload or power-scheme comparisons.
 
-For DVFS exploration, `make 2416-dvfs-explore` replays the same workload at the
-OPPs in `configs/dvfs/mobile_cpu_opps.json` and reports energy, average power,
+For DVFS exploration, `make 2416-dvfs-explore` currently delegates to the
+legacy/simple estimator, replays the same workload at the OPPs in
+`configs/dvfs/mobile_cpu_opps.json`, and reports energy, average power,
 runtime, energy-delay product, and leakage/clock/event/toggle contributor
-breakdowns. The normal Joules collateral flow is unchanged; this is an
-additional open-source estimator path.
+breakdowns. The normal Joules collateral flow is unchanged.
 
 ## Synthesis And Gate-Level Simulation
 
@@ -362,9 +370,10 @@ The `gls` target compiles the synthesized netlist with Verilator and performs a
 functional gate-level simulation. The first GLS phase checks externally visible
 CPU behavior, not SDF timing.
 
-The `2416-synth-power` target turns the Yosys metrics into
-`synthesisCalibratedMacro` IEEE 2416 XML models and runs the same estimator
-against workload activity. This creates a clean comparison path:
+The `2416-synth-power` target is currently a compatibility alias for the
+legacy/simple estimator path. It turns the Yosys metrics into
+`synthesisCalibratedMacro` XML models and runs that estimator against workload
+activity. This creates a clean comparison path:
 
 ```text
 RTL 2416 model -> synthesis-calibrated 2416 model -> mapped stdcell + memory macro model

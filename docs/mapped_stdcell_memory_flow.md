@@ -3,6 +3,11 @@
 This phase moves the toy CPU one step closer to an implementation flow while
 preserving the earlier RTL, UPF, Joules, and IEEE 2416 modes.
 
+The mapped estimator currently uses the legacy/simple XML model family. The
+real-XSD OpenLowPower `2416-power` path remains the primary standards-oriented
+RTL flow; this mapped layer is kept separate until the standard-cell and
+memory-macro representation is upgraded to the fuller XSD.
+
 ## Architecture
 
 ```text
@@ -21,11 +26,11 @@ Liberty
 
 memory macro config
   -> tools/gen_memory_macro_2416.py
-  -> power_models/mobile_cpu/macros/*.xml
+  -> power_models/mobile_cpu/legacy2416/macros/*.xml
 
 RTL workload VCD + mapped gate VCD + models
   -> tools/estimate_mapped_power_2416.py
-  -> reports/2416_mapped/nangate45/<name>_<tech>/
+  -> reports/legacy2416_mapped/nangate45/<name>_<tech>/
 ```
 
 ## Why Keep Memories As Macros
@@ -59,11 +64,11 @@ make 2416-compare-abstractions WORKLOAD=memory_burst TECH=generic_7nm
   shows mapped cell counts by CPU block.
 - `power_models/stdcells/nangate45/stdcell_model_summary.md`
   summarizes generated standard-cell coefficients.
-- `power_models/mobile_cpu/macros/data_sram.xml`
+- `power_models/mobile_cpu/legacy2416/macros/data_sram.xml`
   shows the memory macro model and its read/write contributors.
-- `reports/2416_mapped/nangate45/memory_burst_generic_7nm/2416_power_summary.md`
+- `reports/legacy2416_mapped/nangate45/memory_burst_generic_7nm/2416_power_summary.md`
   shows mapped power by domain and block.
-- `reports/2416_compare/memory_burst_generic_7nm_nangate45/2416_abstraction_compare.md`
+- `reports/legacy2416_compare/memory_burst_generic_7nm_nangate45/2416_abstraction_compare.md`
   compares RTL, synthesis-calibrated, and mapped estimates.
 
 ## Current Limitations

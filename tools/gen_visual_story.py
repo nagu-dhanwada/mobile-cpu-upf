@@ -532,7 +532,7 @@ def main() -> None:
     parser.add_argument("--workload", action="append", dest="workloads", required=True)
     parser.add_argument("--tech", default="generic_7nm")
     parser.add_argument("--scheme", default="dvfs_retention_domains")
-    parser.add_argument("--report-root", type=Path, default=Path("reports/p2416"))
+    parser.add_argument("--report-root", type=Path, default=Path("reports/2416"))
     parser.add_argument("--intent-root", type=Path, default=Path("build/workloadgen"))
     parser.add_argument("--scheme-root", type=Path, default=Path("power_schemes"))
     parser.add_argument("--out", type=Path, default=Path("reports/visual_story/index.html"))

@@ -125,7 +125,7 @@ class IEEE2416FlowTest(unittest.TestCase):
                     sys.executable,
                     str(ROOT / "tools" / "gen_2416_xsd.py"),
                     "--spec",
-                    str(ROOT / "spec_model" / "ieee2416_2025_schema.json"),
+                    str(ROOT / "legacy" / "simple_2416_schema" / "schema_profile.json"),
                     "--out",
                     str(schema),
                 ],
@@ -262,7 +262,7 @@ class IEEE2416FlowTest(unittest.TestCase):
             self.assertTrue((out / "2416_compare_energy.svg").exists())
             self.assertIn("case_b", (out / "2416_compare.csv").read_text(encoding="utf-8"))
 
-    def test_openlowpower_p2416_library_generation_and_estimation(self):
+    def test_openlowpower_ieee2416_library_generation_and_estimation(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
             library = tmp_path / "mobile_cpu_library.xml"
@@ -273,7 +273,7 @@ class IEEE2416FlowTest(unittest.TestCase):
             subprocess.run(
                 [
                     sys.executable,
-                    str(ROOT / "tools" / "p2416" / "characterize.py"),
+                    str(ROOT / "tools" / "ieee2416" / "characterize.py"),
                     "--tech",
                     str(ROOT / "configs" / "tech" / "generic_7nm.json"),
                     "--out",
@@ -286,7 +286,7 @@ class IEEE2416FlowTest(unittest.TestCase):
             subprocess.run(
                 [
                     sys.executable,
-                    str(ROOT / "tools" / "p2416" / "validate.py"),
+                    str(ROOT / "tools" / "ieee2416" / "validate.py"),
                     str(library),
                 ],
                 check=True,
@@ -297,7 +297,7 @@ class IEEE2416FlowTest(unittest.TestCase):
                 subprocess.run(
                     [
                         sys.executable,
-                        str(ROOT / "tools" / "p2416" / "validate.py"),
+                        str(ROOT / "tools" / "ieee2416" / "validate.py"),
                         str(library),
                         "--xsd",
                         str(OPENLOWPOWER_XSD),
@@ -317,7 +317,7 @@ class IEEE2416FlowTest(unittest.TestCase):
             subprocess.run(
                 [
                     sys.executable,
-                    str(ROOT / "tools" / "p2416" / "estimate.py"),
+                    str(ROOT / "tools" / "ieee2416" / "estimate.py"),
                     "--model",
                     str(library),
                     "--tech",
@@ -492,7 +492,7 @@ class IEEE2416FlowTest(unittest.TestCase):
                     sys.executable,
                     str(ROOT / "tools" / "gen_2416_xsd.py"),
                     "--spec",
-                    str(ROOT / "spec_model" / "ieee2416_2025_schema.json"),
+                    str(ROOT / "legacy" / "simple_2416_schema" / "schema_profile.json"),
                     "--out",
                     str(schema),
                 ],

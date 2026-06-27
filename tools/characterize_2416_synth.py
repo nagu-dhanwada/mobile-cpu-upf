@@ -126,9 +126,9 @@ def write_model(tree_root: ET.Element, out_path: Path) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--rtl-models", type=Path, default=Path("power_models/mobile_cpu/rtl"))
+    parser.add_argument("--rtl-models", type=Path, default=Path("power_models/mobile_cpu/legacy2416/rtl"))
     parser.add_argument("--metrics", type=Path, required=True)
-    parser.add_argument("--out", type=Path, default=Path("power_models/mobile_cpu/synth"))
+    parser.add_argument("--out", type=Path, default=Path("power_models/mobile_cpu/legacy2416/synth"))
     args = parser.parse_args()
 
     metrics = json.loads(args.metrics.read_text(encoding="utf-8"))

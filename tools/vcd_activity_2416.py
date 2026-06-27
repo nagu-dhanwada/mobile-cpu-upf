@@ -392,7 +392,7 @@ class VcdActivityExtractor:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--vcd", type=Path, required=True)
-    parser.add_argument("--out", type=Path, default=Path("reports/2416/activity.json"))
+    parser.add_argument("--out", type=Path, default=Path("reports/legacy2416/activity.json"))
     args = parser.parse_args()
 
     activity = VcdActivityExtractor(args.vcd).extract()

@@ -13,7 +13,7 @@ if __package__ in {None, ""}:
     sys.path.insert(0, str(REPO_ROOT))
 
 from tools.characterize_2416 import BLOCKS, clock_state, state_leakage, supply_for_domain
-from tools.p2416.ir import (
+from tools.ieee2416.ir import (
     Cell,
     Condition,
     ConditionSet,
@@ -32,7 +32,7 @@ from tools.p2416.ir import (
     UnitDef,
     fmt_float,
 )
-from tools.p2416.writer import write_library
+from tools.ieee2416.writer import write_library
 
 
 POWER_STATES = ("RUN", "IDLE", "LIGHT_SLEEP", "DEEP_SLEEP", "WAKE")
@@ -245,7 +245,7 @@ def build_library(tech: dict) -> Library:
         ),
     )
     return Library(
-        name="mobile_cpu_p2416",
+        name="mobile_cpu_ieee2416",
         version="0.1.0",
         technology=technology,
         units=default_units(),
@@ -279,7 +279,7 @@ def write_manifest(path: Path, library: Library, tech_path: Path, xml_path: Path
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--tech", type=Path, default=Path("configs/tech/generic_7nm.json"))
-    parser.add_argument("--out", type=Path, default=Path("power_models/mobile_cpu/p2416/mobile_cpu_library.xml"))
+    parser.add_argument("--out", type=Path, default=Path("power_models/mobile_cpu/ieee2416/mobile_cpu_library.xml"))
     parser.add_argument("--manifest", type=Path)
     args = parser.parse_args()
 

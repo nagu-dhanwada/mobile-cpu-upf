@@ -1,9 +1,9 @@
 {
-  "library": "mobile_cpu_p2416",
+  "library": "mobile_cpu_ieee2416",
   "version": "0.1.0",
   "technology": "generic_7nm",
   "tech_config": "configs/tech/generic_7nm.json",
-  "xml": "power_models/mobile_cpu/p2416/mobile_cpu_library.xml",
+  "xml": "power_models/mobile_cpu/ieee2416/mobile_cpu_library.xml",
   "cells": [
     "fetch_unit",
     "instr_rom",

@@ -498,7 +498,7 @@ def write_model(block: BlockSpec, tech: dict, out_dir: Path) -> Path:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--tech", type=Path, default=Path("configs/tech/generic_7nm.json"))
-    parser.add_argument("--out", type=Path, default=Path("power_models/mobile_cpu/rtl"))
+    parser.add_argument("--out", type=Path, default=Path("power_models/mobile_cpu/legacy2416/rtl"))
     args = parser.parse_args()
 
     tech = json.loads(args.tech.read_text(encoding="utf-8"))

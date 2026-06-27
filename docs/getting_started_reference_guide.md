@@ -12,8 +12,10 @@ Start with these files:
 - `power_schemes/04_dvfs_retention_domains.json`: the richest low-power scheme.
 - `tools/gen_upf.py`: automatic UPF generator.
 - `tools/asm.py`: small workload assembler for this CPU.
-- `tools/estimate_power_2416.py`: RTL power estimation from IEEE 2416 XML
-  models and VCD activity.
+- `tools/ieee2416/estimate.py`: OpenLowPower IEEE 2416 power estimation from a
+  schema-valid `Library` XML and VCD activity.
+- `tools/estimate_power_2416.py`: legacy/simple XML estimator used by the
+  older synthesis and mapped-abstraction experiments.
 - `tools/run_yosys_synth.py`: Yosys synthesis driver for the CPU.
 - `tools/characterize_2416_synth.py`: synthesis-calibrated 2416 model
   generator.
@@ -130,24 +132,24 @@ This writes a VCD plus a Cadence Joules Tcl starter script. Joules still needs
 real technology `.lib` files from a process/library kit before it can produce
 meaningful absolute power numbers.
 
-## Run The IEEE 2416 RTL Power Flow
+## Run The IEEE 2416 Real-XSD Power Flow
 
 ```sh
-make 2416-power WORKLOAD=memory_burst TECH=generic_7nm
+make 2416-power WORKLOAD=memory_burst TECH=generic_7nm SCHEME=dvfs_retention_domains
 ```
 
 This generates/uses:
 
-- `schemas/ieee2416-2025.xsd`
-- `power_models/mobile_cpu/rtl/*.xml`
+- `$HOME/Downloads/2416.xsd`, or the path passed with `OPENLOWPOWER_2416_XSD`
+- `power_models/mobile_cpu/ieee2416/mobile_cpu_library.xml`
 - `waves/memory_burst.vcd`
-- `reports/2416/memory_burst_generic_7nm/2416_power_summary.md`
-- `reports/2416/memory_burst_generic_7nm/2416_power_waveform.svg`
+- `reports/2416/memory_burst_generic_7nm_dvfs_retention_domains/2416_power_summary.md`
+- `reports/2416/memory_burst_generic_7nm_dvfs_retention_domains/2416_power_waveform.svg`
 
-The XML files are executable macro power models for each RTL block. The VCD
-supplies workload activity and power-state residency. The estimator combines
-leakage, clock, event, and optional toggle components to report power by block
-and by power domain.
+The generated XML is an OpenLowPower IEEE 2416 `Library` containing executable
+power models for each RTL block. The VCD supplies workload activity and
+power-state residency. The estimator combines leakage, clock, event, and
+optional toggle components to report power by block and by power domain.
 
 For visual comparisons:
 
@@ -157,11 +159,21 @@ make 2416-compare-schemes WORKLOAD=memory_burst TECH=generic_7nm
 make 2416-dvfs-explore WORKLOAD=memory_burst TECH=generic_7nm
 ```
 
-Those commands produce SVG bar charts for workload energy/power and
-power-scheme energy/power. The DVFS command additionally writes
-`reports/2416/dvfs/.../dvfs_summary.md`, OPP comparison CSVs, and charts for
-energy, average power, runtime, energy-delay product, and contributor
+The compare commands produce SVG bar charts for workload energy/power and
+power-scheme energy/power under `reports/2416/`. The DVFS command currently
+delegates to the legacy/simple estimator and writes
+`reports/legacy2416/dvfs/.../dvfs_summary.md`, OPP comparison CSVs, and charts
+for energy, average power, runtime, energy-delay product, and contributor
 breakdown.
+
+The older compact XML flow is still available when you specifically want it:
+
+```sh
+make legacy2416-power WORKLOAD=memory_burst TECH=generic_7nm
+```
+
+That path uses `legacy/simple_2416_schema/schema_profile.json` and writes
+simplified models under `power_models/mobile_cpu/legacy2416/`.
 
 ## Generate The Visual Walkthrough
 
@@ -202,11 +214,12 @@ make gls WORKLOAD=memory_burst
 make 2416-synth-power WORKLOAD=memory_burst TECH=generic_7nm
 ```
 
-This adds a second abstraction layer. The RTL 2416 model is characterized from
-architectural events. The synthesis-calibrated model uses Yosys cell metrics
-from the generated netlist to scale those coefficients. Gate-level simulation
-checks that the synthesized netlist still behaves like the CPU before those
-netlist metrics are used for power modeling.
+This adds a second abstraction layer using the legacy/simple XML estimator. The
+RTL macro model is characterized from architectural events. The
+synthesis-calibrated model uses Yosys cell metrics from the generated netlist to
+scale those coefficients. Gate-level simulation checks that the synthesized
+netlist still behaves like the CPU before those netlist metrics are used for
+power modeling.
 
 ## Run The Mapped Standard-Cell Flow
 
@@ -227,18 +240,19 @@ make 2416-compare-abstractions WORKLOAD=memory_burst TECH=generic_7nm
 
 The generic synthesis path checks that the RTL can synthesize. The mapped path
 goes one level closer to implementation: CPU logic maps to real Nangate45
-standard cells, while instruction ROM and data SRAM stay as macros. The 2416
-mapped estimator combines Liberty-derived standard-cell models, memory macro
-models, RTL power-state residency, and gate-level VCD toggles.
+standard cells, while instruction ROM and data SRAM stay as macros. This mapped
+estimator currently uses the legacy/simple XML model family. It combines
+Liberty-derived standard-cell models, memory macro models, RTL power-state
+residency, and gate-level VCD toggles.
 
 Useful outputs:
 
 - `build/mapped/nangate45/memory_burst/mobile_cpu_mapped.v`
 - `build/mapped/nangate45/memory_burst/mobile_cpu_mapped_metrics.md`
 - `power_models/stdcells/nangate45/stdcell_model_summary.md`
-- `power_models/mobile_cpu/macros/data_sram.xml`
-- `reports/2416_mapped/nangate45/memory_burst_generic_7nm/2416_power_summary.md`
-- `reports/2416_compare/memory_burst_generic_7nm_nangate45/2416_abstraction_compare.md`
+- `power_models/mobile_cpu/legacy2416/macros/data_sram.xml`
+- `reports/legacy2416_mapped/nangate45/memory_burst_generic_7nm/2416_power_summary.md`
+- `reports/legacy2416_compare/memory_burst_generic_7nm_nangate45/2416_abstraction_compare.md`
 
 ## Modify A Power Scheme
 
@@ -284,11 +298,11 @@ Use this order when studying or demonstrating the flow:
    activity is separated from power-manager stimulus.
 8. Run `make joules-workload WORKLOAD=memory_burst` to create a VCD and Joules
    Tcl starter script for an RTL power-analysis flow.
-9. Run `make 2416-power WORKLOAD=memory_burst` to exercise the standards-based
-   XML model flow.
+9. Run `make 2416-power WORKLOAD=memory_burst` to exercise the real-XSD
+   OpenLowPower IEEE 2416 model flow.
 10. Run `make visual-story` to generate the animated documentation dashboard.
-11. Run `make 2416-compare-abstractions WORKLOAD=memory_burst` to compare RTL,
-    synth-calibrated, and mapped power estimates.
+11. Run `make 2416-compare-abstractions WORKLOAD=memory_burst` to compare the
+    legacy/simple RTL, synth-calibrated, and mapped power estimates.
 12. Run `make explore` and inspect the summary table.
 13. Run `make test` to check the automation.
 

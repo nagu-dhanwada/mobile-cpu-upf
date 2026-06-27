@@ -79,7 +79,7 @@ class VisualStoryTest(unittest.TestCase):
     def test_visual_story_handles_regular_and_generated_workloads(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
-            report_root = tmp_path / "reports" / "p2416"
+            report_root = tmp_path / "reports" / "2416"
             intent_root = tmp_path / "build" / "workloadgen"
             scheme_root = tmp_path / "power_schemes"
             out = tmp_path / "visual" / "index.html"
@@ -143,7 +143,7 @@ class VisualStoryTest(unittest.TestCase):
     def test_missing_optional_intent_does_not_crash(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
-            report_root = tmp_path / "reports" / "p2416"
+            report_root = tmp_path / "reports" / "2416"
             out = tmp_path / "visual" / "index.html"
             write_case(report_root, "generated/no_intent", "generic_7nm", "dvfs_retention_domains", 11.0)
 
@@ -178,4 +178,3 @@ class VisualStoryTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

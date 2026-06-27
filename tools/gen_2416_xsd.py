@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the IEEE 2416 reference XML schema used by this project."""
+"""Generate the legacy simple XML schema used by the educational 2416-style flow."""
 
 from __future__ import annotations
 
@@ -230,8 +230,8 @@ def render_xsd(spec: dict) -> str:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--spec", type=Path, default=Path("spec_model/ieee2416_2025_schema.json"))
-    parser.add_argument("--out", type=Path, default=Path("schemas/ieee2416-2025.xsd"))
+    parser.add_argument("--spec", type=Path, default=Path("legacy/simple_2416_schema/schema_profile.json"))
+    parser.add_argument("--out", type=Path, default=Path("legacy/simple_2416_schema/generated_schema.xsd"))
     args = parser.parse_args()
 
     spec = json.loads(args.spec.read_text(encoding="utf-8"))

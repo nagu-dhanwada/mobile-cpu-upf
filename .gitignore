@@ -20,7 +20,10 @@ reports/2416/
 reports/2416_synth/
 reports/2416_mapped/
 reports/2416_compare/
-reports/p2416/
+reports/legacy2416/
+reports/legacy2416_synth/
+reports/legacy2416_mapped/
+reports/legacy2416_compare/
 reports/gls/
 reports/joules/
 work/

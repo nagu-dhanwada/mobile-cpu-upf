@@ -1,7 +1,12 @@
 # Synthesis And Gate-Level Flow
 
-This repository now has an additive synthesis layer on top of the existing RTL,
-UPF, Joules, and IEEE 2416 RTL power flows.
+This repository has an additive synthesis layer on top of the existing RTL,
+UPF, Joules, and IEEE 2416 power flows.
+
+The synthesis-calibrated and mapped power estimates currently use the
+legacy/simple XML estimator because the real-XSD OpenLowPower standard-cell and
+memory-macro model path is still future work. The compatibility targets keep
+their familiar names, but they print a note and delegate to `legacy2416-*`.
 
 The implementation uses Yosys as the open-source synthesis engine and
 Verilator for functional post-synthesis simulation. It has two synthesis modes:
@@ -82,7 +87,7 @@ visible behavior:
 
 This is functional GLS. It is not yet timing/SDF simulation.
 
-## Generate Synthesis-Calibrated IEEE 2416 Models
+## Generate Synthesis-Calibrated Legacy 2416-Style Models
 
 ```sh
 make 2416-synth-power WORKLOAD=memory_burst TECH=generic_7nm
@@ -90,12 +95,12 @@ make 2416-synth-power WORKLOAD=memory_burst TECH=generic_7nm
 
 This does three things:
 
-1. Generates the existing RTL 2416 models.
+1. Generates the legacy/simple RTL macro models.
 2. Runs Yosys synthesis and extracts cell metrics.
-3. Creates synthesis-calibrated 2416 XML models under:
+3. Creates synthesis-calibrated legacy XML models under:
 
 ```text
-power_models/mobile_cpu/synth/
+power_models/mobile_cpu/legacy2416/synth/
 ```
 
 The generated models use:
@@ -117,7 +122,7 @@ synthesis-calibrated macro estimate
 The output report is written under:
 
 ```text
-reports/2416_synth/<workload>_<tech>/
+reports/legacy2416_synth/<workload>_<tech>/
 ```
 
 ## What Is Calibrated
@@ -177,11 +182,11 @@ implementation distinction between standard-cell logic and memory macros.
 
 ## 2416 Models At The Mapped Level
 
-The mapped flow adds two model families:
+The mapped flow adds two legacy/simple model families:
 
 ```text
 power_models/stdcells/nangate45/*.xml
-power_models/mobile_cpu/macros/*.xml
+power_models/mobile_cpu/legacy2416/macros/*.xml
 ```
 
 The standard-cell XML models are generated from Liberty area, leakage,
@@ -205,7 +210,7 @@ make 2416-compare-abstractions WORKLOAD=memory_burst TECH=generic_7nm
 Example output:
 
 ```text
-reports/2416_compare/memory_burst_generic_7nm_nangate45/2416_abstraction_compare.md
+reports/legacy2416_compare/memory_burst_generic_7nm_nangate45/2416_abstraction_compare.md
 ```
 
 This is the intended abstraction progression:

@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<Library xmlns="OpenLowPower" name="mobile_cpu_p2416" version="0.1.0" condition="generic_7nm_nominal" datagen="estimated">
+<Library xmlns="OpenLowPower" name="mobile_cpu_ieee2416" version="0.1.0" condition="generic_7nm_nominal" datagen="estimated">
   <annotation>Generated OpenLowPower IEEE 2416 library for the mobile CPU educational power exploration platform.</annotation>
   <Technology name="generic_7nm" version="1.0">
     <Process name="tt" />

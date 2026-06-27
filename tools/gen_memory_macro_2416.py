@@ -208,7 +208,7 @@ def write_macro_model(macro: dict, config: dict, out_dir: Path) -> Path:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, default=Path("configs/memory_macros/mobile_cpu_memory_macros.json"))
-    parser.add_argument("--out", type=Path, default=Path("power_models/mobile_cpu/macros"))
+    parser.add_argument("--out", type=Path, default=Path("power_models/mobile_cpu/legacy2416/macros"))
     args = parser.parse_args()
 
     config = json.loads(args.config.read_text(encoding="utf-8"))

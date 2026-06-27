@@ -504,7 +504,7 @@ def main() -> None:
     parser.add_argument("--rtl-vcd", type=Path)
     parser.add_argument("--activity", type=Path)
     parser.add_argument("--scheme", default="dvfs_retention_domains")
-    parser.add_argument("--out", type=Path, default=Path("reports/2416_mapped"))
+    parser.add_argument("--out", type=Path, default=Path("reports/legacy2416_mapped"))
     args = parser.parse_args()
 
     tech = json.loads(args.tech.read_text(encoding="utf-8"))

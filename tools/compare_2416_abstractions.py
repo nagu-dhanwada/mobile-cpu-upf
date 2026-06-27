@@ -118,7 +118,7 @@ def write_summary(path: Path, rows: list[dict]) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--case", action="append", required=True, type=parse_case)
-    parser.add_argument("--out", type=Path, default=Path("reports/2416_compare/abstractions"))
+    parser.add_argument("--out", type=Path, default=Path("reports/legacy2416_compare/abstractions"))
     args = parser.parse_args()
 
     rows = load_rows(args.case)

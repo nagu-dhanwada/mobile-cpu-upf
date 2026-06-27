@@ -127,11 +127,11 @@ def load_library_models(path: Path) -> list[PowerModel]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--model", type=Path, default=Path("power_models/mobile_cpu/p2416/mobile_cpu_library.xml"))
+    parser.add_argument("--model", type=Path, default=Path("power_models/mobile_cpu/ieee2416/mobile_cpu_library.xml"))
     parser.add_argument("--tech", type=Path, default=Path("configs/tech/generic_7nm.json"))
     parser.add_argument("--vcd", type=Path)
     parser.add_argument("--activity", type=Path)
-    parser.add_argument("--out", type=Path, default=Path("reports/p2416"))
+    parser.add_argument("--out", type=Path, default=Path("reports/2416"))
     parser.add_argument("--scheme", default="dvfs_retention_domains")
     args = parser.parse_args()
 
@@ -152,7 +152,6 @@ def main() -> None:
         activity = VcdActivityExtractor(args.vcd).extract()
         args.out.mkdir(parents=True, exist_ok=True)
         activity_text = json.dumps(activity, indent=2) + "\n"
-        (args.out / "p2416_activity.json").write_text(activity_text, encoding="utf-8")
         (args.out / "2416_activity.json").write_text(activity_text, encoding="utf-8")
 
     activity = normalize_activity_time(activity, tech)
@@ -166,4 +165,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

@@ -2,8 +2,11 @@
 
 This flow generates a schema-valid OpenLowPower IEEE 2416 `Library` XML for the
 toy mobile CPU and uses that model with VCD activity to estimate power. It is a
-newer, schema-driven path that sits beside the existing lightweight `2416-*`
-targets.
+schema-driven path built around the more complete IEEE 2416 XSD.
+
+The plain `2416-*` Make targets are the primary path for this flow. The older
+`p2416-*` target names are kept as aliases so existing notes and scripts still
+work.
 
 ## Inputs
 
@@ -19,13 +22,13 @@ targets.
 The characterizer writes one XML library:
 
 ```sh
-make p2416-characterize TECH=generic_7nm
+make 2416-characterize TECH=generic_7nm
 ```
 
 Default output:
 
 ```text
-power_models/mobile_cpu/p2416/mobile_cpu_library.xml
+power_models/mobile_cpu/ieee2416/mobile_cpu_library.xml
 ```
 
 The XML root is `Library` in the `OpenLowPower` namespace. Each CPU block,
@@ -42,7 +45,7 @@ including the memory-mapped `dataflow_unit`, is a `Cell` with:
 Run schema and semantic validation:
 
 ```sh
-make p2416-validate OPENLOWPOWER_2416_XSD=$HOME/Downloads/2416.xsd
+make 2416-validate OPENLOWPOWER_2416_XSD=$HOME/Downloads/2416.xsd
 ```
 
 The validator first checks the generated XML against the provided XSD, then runs
@@ -54,13 +57,13 @@ metadata or empty state power definitions.
 Run a workload, generate the schema-valid model, validate it, and estimate power:
 
 ```sh
-make p2416-power WORKLOAD=memory_burst TECH=generic_7nm SCHEME=dvfs_retention_domains
+make 2416-power WORKLOAD=memory_burst TECH=generic_7nm SCHEME=dvfs_retention_domains
 ```
 
 Default reports:
 
 ```text
-reports/p2416/memory_burst_generic_7nm_dvfs_retention_domains/
+reports/2416/memory_burst_generic_7nm_dvfs_retention_domains/
 ```
 
 Important outputs:
@@ -74,7 +77,7 @@ Important outputs:
 
 ## Workload Profiling
 
-The p2416 power result can feed an architecture-efficiency profile:
+The IEEE 2416 power result can feed an architecture-efficiency profile:
 
 ```sh
 make profile-workload WORKLOAD=dataflow_mac TECH=generic_7nm SCHEME=dvfs_retention_domains
@@ -83,7 +86,7 @@ make profile-workload WORKLOAD=dataflow_mac TECH=generic_7nm SCHEME=dvfs_retenti
 This produces:
 
 ```text
-reports/p2416/dataflow_mac_generic_7nm_dvfs_retention_domains/workload_profile/
+reports/2416/dataflow_mac_generic_7nm_dvfs_retention_domains/workload_profile/
 ```
 
 The profile summarizes instruction mix, memory intensity, dataflow MAC count,
@@ -98,8 +101,11 @@ make compare-dataflow TECH=generic_7nm SCHEME=dvfs_retention_domains
 
 ## Relationship To The Existing Flow
 
-The older `2416-*` targets still generate and consume the repository's compact
-reference XML format. The new `p2416-*` targets generate and consume the
-OpenLowPower `Library` structure from the uploaded XSD. Keeping both flows makes
-it easy to compare a small educational format with the fuller standard-oriented
-model representation while the tooling evolves.
+The repository also keeps the original compact XML experiment under
+`legacy2416-*`. That path uses `legacy/simple_2416_schema/schema_profile.json`
+to generate a small educational XSD, then writes simplified XML under
+`power_models/mobile_cpu/legacy2416/`.
+
+Use `legacy2416-*` only when you intentionally want that compact bootstrap
+format. For normal IEEE 2416 exploration with the uploaded XSD, use the plain
+`2416-*` targets in this guide.
