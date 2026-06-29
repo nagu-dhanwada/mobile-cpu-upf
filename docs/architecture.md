@@ -37,9 +37,10 @@ These top-level instance names are used by the power-scheme JSON files:
 ## Dataflow Unit
 
 `u_dataflow` is a small memory-mapped multiply-accumulate unit used to explore
-CPU versus dataflow offload efficiency. It shares the existing CPU power domain
-in this first model and is clocked through the memory-side clock gate because
-the CPU reaches it through the load/store path.
+CPU versus dataflow offload efficiency. In this toy CPU it is still an MMIO
+slave peripheral: the CPU reaches it through the ordinary load/store path, it
+does not fetch operands from memory by itself, and it shares the existing CPU
+power-domain behavior while being clocked through the memory-side clock gate.
 
 The toy MMIO map uses byte offsets that fit the existing 4-bit immediate load
 and store format:
@@ -49,10 +50,39 @@ and store format:
 | `4` | write/read | operand A |
 | `5` | write/read | operand B |
 | `6` | write/read | command/status |
-| `7` | read | accumulated result |
+| `7` | read/write | accumulated result on reads, repeat count on writes |
 
-Command bit `0` starts one MAC operation. Command bit `1` clears the
-accumulator. A command value of `3` clears and starts from zero in one access.
+Command bit `0` starts MAC work. Command bit `1` clears the accumulator. A
+command value of `3` clears first and then starts from zero in the same MMIO
+access. Command writes are treated as pulses rather than sticky state, so
+holding the same command value does not repeatedly launch new operations.
+
+Status reads from offset `6` expose:
+
+| Bit(s) | Meaning |
+| ---: | --- |
+| `0` | done |
+| `1` | busy |
+| `2` | repeat count is greater than one |
+| `3` | one-cycle MAC-valid pulse |
+| `15:8` | remaining repeat count |
+| `23:16` | programmed repeat count |
+
+The write side of offset `7` adds a small local repeat-count mode. Software can
+write operands once, write a repeat count, and then issue one start command; the
+dataflow block performs that many MAC cycles internally using the local operand
+registers. This is still intentionally tiny, but it avoids the pure
+"one CPU store per MAC" structure for simple repeated operations.
+
+Commercial high-performance accelerators usually go further: the CPU writes
+descriptors and status through MMIO, while the accelerator datapath acts as a
+data-side bus master or coherent requester to fetch operand streams, perform
+many operations locally, and write results back. This CPU does not yet have a
+load/store queue, data fabric, cache-coherent port, DMA engine, interrupt path,
+or memory protection model, so the current RTL does not pretend to implement
+that behavior. A future version could add a requester interface next to
+`data_sram` or a small scratchpad/FIFO path before introducing richer ISA
+support.
 
 ## Power Intent Concepts Covered
 

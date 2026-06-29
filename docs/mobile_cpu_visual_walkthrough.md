@@ -47,11 +47,14 @@ the execute unit either performs an ALU operation or issues a load/store. Normal
 loads and stores access `data_sram`. Stores and loads to offsets `4`, `5`, `6`,
 and `7` access the memory-mapped `dataflow_unit`.
 
-The `dataflow_unit` is a tiny multiply-accumulate block. It exists to make CPU
-versus offload tradeoffs visible:
+The `dataflow_unit` is a tiny multiply-accumulate block. It is still controlled
+as an MMIO slave, but it now has a small local repeat-count mode so software can
+program operands/control once and let the block perform several MAC cycles
+internally. It exists to make CPU versus offload tradeoffs visible:
 
 - CPU-only MAC workloads spend more instructions in the ALU.
-- Dataflow MAC workloads spend more instructions on MMIO operand traffic.
+- Dataflow MAC workloads spend instructions on MMIO control traffic and can
+  amortize that traffic when repeat mode is used.
 - The power model can then compare useful operation count, memory intensity,
   dataflow MAC count, and recovery energy.
 
@@ -103,10 +106,10 @@ Use the generated workload cards and charts together:
 - Domain energy reveals whether a workload is CPU-dominated, memory-dominated,
   or always-on-controller dominated.
 
-For example, a dataflow-heavy workload may reduce ALU work but increase memory
-mapped traffic. Whether that is a win depends on how many useful MAC operations
-are done per MMIO sequence and how much low-power recovery energy is included in
-the scenario.
+For example, a dataflow-heavy workload may reduce ALU work but increase
+memory-mapped control traffic. Whether that is a win depends on how many useful
+MAC operations are done per MMIO sequence, whether repeat mode is used, and how
+much low-power recovery energy is included in the scenario.
 
 ## Commands
 
@@ -137,4 +140,3 @@ make visual-story TECH=generic_7nm SCHEME=clock_gated_idle
 
 The checked-in source of truth is the documentation, workload specs, and
 generator tool. The generated report directory is intentionally ignored by Git.
-

@@ -23,15 +23,16 @@ POWER_SIM_INC ?= /private/tmp/mobile_cpu_upf_power_sim_inc
 POWER_SIM_OBJ ?= /private/tmp/mobile_cpu_upf_power_sim_obj
 POWER_SIM_OBJ_VCD ?= /private/tmp/mobile_cpu_upf_power_sim_vcd_obj
 POWER_SIM_SRC_LINK ?= /private/tmp/mobile_cpu_upf_src
+DATAFLOW_TB_OBJ ?= /private/tmp/mobile_cpu_upf_dataflow_tb_obj
 JOULES_DIR ?= build/joules
 TECH ?= generic_7nm
 TECH_CONFIG ?= configs/tech/$(TECH).json
 OPENLOWPOWER_2416_XSD ?= $(HOME)/Downloads/2416.xsd
 OPENLOWPOWER_2416_MODEL ?= power_models/mobile_cpu/ieee2416/mobile_cpu_library.xml
 OPENLOWPOWER_2416_REPORT_DIR ?= reports/2416/$(WORKLOAD)_$(TECH)_$(SCHEME)
-IEEE2416_WORKLOADS ?= alu_idle compute_burst memory_burst cpu_mac dataflow_mac
+IEEE2416_WORKLOADS ?= alu_idle compute_burst memory_burst cpu_mac dataflow_mac dataflow_burst
 IEEE2416_SCHEMES ?= baseline_always_on clock_gated_idle core_power_gated_sleep dvfs_retention_domains
-EFFICIENCY_WORKLOADS ?= cpu_mac dataflow_mac
+EFFICIENCY_WORKLOADS ?= cpu_mac dataflow_mac dataflow_burst
 DVFS_OPPS ?= configs/dvfs/mobile_cpu_opps.json
 OPENLOWPOWER_DVFS_REPORT_DIR ?= reports/2416/dvfs/$(WORKLOAD)_$(TECH)_$(SCHEME)
 SYNTH_DIR ?= build/synth/$(WORKLOAD)
@@ -78,7 +79,7 @@ RTL_FILES := \
 VERILATOR_WARNINGS := -Wno-UNUSEDSIGNAL -Wno-COMBDLY
 VERILATOR_GLS_WARNINGS := $(VERILATOR_WARNINGS) -Wno-DECLFILENAME -Wno-LATCH -Wno-UNOPTFLAT
 
-.PHONY: upf explore test lint-rtl gen-workload assemble-generated sim-generated sim-generated-vcd profile-generated assemble-workload sim-power sim-power-vcd sim-workload sim-workload-vcd synth gls synth-mapped gls-mapped techlib-nangate45 joules-script joules-input joules-workload 2416-characterize 2416-validate 2416-power 2416-compare-workloads 2416-compare-schemes 2416-dvfs-explore 2416-synth-characterize 2416-synth-validate 2416-synth-power 2416-stdcell-models 2416-stdcell-validate 2416-memory-macros 2416-memory-macro-validate 2416-mapped-power 2416-compare-abstractions p2416-characterize p2416-validate p2416-power profile-workload compare-dataflow visual-story-data visual-story open-visual-story waves waves-workload clean
+.PHONY: upf explore test test-dataflow-rtl lint-rtl gen-workload assemble-generated sim-generated sim-generated-vcd profile-generated assemble-workload sim-power sim-power-vcd sim-workload sim-workload-vcd synth gls synth-mapped gls-mapped techlib-nangate45 joules-script joules-input joules-workload 2416-characterize 2416-validate 2416-power 2416-compare-workloads 2416-compare-schemes 2416-dvfs-explore 2416-synth-characterize 2416-synth-validate 2416-synth-power 2416-stdcell-models 2416-stdcell-validate 2416-memory-macros 2416-memory-macro-validate 2416-mapped-power 2416-compare-abstractions p2416-characterize p2416-validate p2416-power profile-workload compare-dataflow visual-story-data visual-story open-visual-story waves waves-workload clean
 
 upf:
 	$(PYTHON) tools/gen_upf.py --schemes power_schemes --out upf
@@ -91,6 +92,17 @@ test:
 
 lint-rtl:
 	$(VERILATOR) --lint-only --sv -Wall $(VERILATOR_WARNINGS) $(RTL_FILES)
+
+test-dataflow-rtl:
+	rm -rf $(DATAFLOW_TB_OBJ)
+	ln -sfn "$(CURDIR)" $(POWER_SIM_SRC_LINK)
+	$(VERILATOR) --cc --exe --build --sv -Wall -Wno-UNUSEDSIGNAL -Wno-DECLFILENAME \
+		--Mdir $(DATAFLOW_TB_OBJ) \
+		-CFLAGS "-std=c++17 -Wno-unknown-warning-option" \
+		--top-module dataflow_unit \
+		$(POWER_SIM_SRC_LINK)/rtl/dataflow_unit.sv \
+		$(POWER_SIM_SRC_LINK)/sim/dataflow_unit_tb.cpp
+	$(DATAFLOW_TB_OBJ)/Vdataflow_unit
 
 assemble-workload:
 	mkdir -p build/workloads

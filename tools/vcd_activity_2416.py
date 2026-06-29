@@ -292,6 +292,8 @@ class VcdActivityExtractor:
             return
         self.clock_cycles["mem"] += 1
         self.clock_cycles_by_dvfs["mem"][self._dvfs()] += 1
+        if bit_value(self._value(f"{DUT}.dataflow_op_valid")):
+            self._add_event("dataflow_unit", "mac_accumulate")
 
     def _sample_core_edge(self) -> None:
         if not self._reset_released():
@@ -349,14 +351,11 @@ class VcdActivityExtractor:
                 if offset in {0, 1}:
                     self._add_event("dataflow_unit", "operand_write")
                 elif offset == 2:
+                    self._add_event("dataflow_unit", "command_write")
                     if mem_wdata & 0x2:
                         self._add_event("dataflow_unit", "accumulator_clear")
-                    if mem_wdata & 0x1:
-                        self._add_event("dataflow_unit", "mac_accumulate")
-                    if (mem_wdata & 0x3) == 0:
-                        self._add_event("dataflow_unit", "command_write")
                 else:
-                    self._add_event("dataflow_unit", "command_write")
+                    self._add_event("dataflow_unit", "repeat_count_write")
             return
 
         if opcode == 0x6:

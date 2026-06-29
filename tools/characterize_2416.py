@@ -174,7 +174,9 @@ BLOCKS: tuple[BlockSpec, ...] = (
         parameters=(("operand_width", "16", "bit"), ("accumulator_width", "32", "bit")),
         events=(
             EventSpec("operand_write", "mmio_write_operand", "Write operand A or B through the dataflow MMIO window.", op_energy(16, 0.35)),
-            EventSpec("mac_accumulate", "mmio_command_start", "Execute one 16x16 multiply-accumulate operation.", op_energy(32, 4.00)),
+            EventSpec("repeat_count_write", "mmio_write_repeat_count", "Program the local repeat count register.", op_energy(8, 0.18)),
+            EventSpec("command_write", "mmio_write_command", "Write the dataflow command register.", op_energy(8, 0.20)),
+            EventSpec("mac_accumulate", "dataflow_op_valid", "Execute one 16x16 multiply-accumulate operation.", op_energy(32, 4.00)),
             EventSpec("accumulator_clear", "mmio_command_clear", "Clear the dataflow accumulator.", op_energy(32, 0.35)),
             EventSpec("status_read", "mmio_read_status", "Read dataflow status register.", op_energy(8, 0.20)),
             EventSpec("result_read", "mmio_read_result", "Read accumulated dataflow result.", op_energy(32, 0.45)),

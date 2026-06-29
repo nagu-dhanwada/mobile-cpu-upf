@@ -597,7 +597,13 @@
       <Event name="operand_write" mode="RUN" style="pinTransition" when="mmio_write_operand &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
         <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.0084" />
       </Event>
-      <Event name="mac_accumulate" mode="RUN" style="pinTransition" when="mmio_command_start &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+      <Event name="repeat_count_write" mode="RUN" style="pinTransition" when="mmio_write_repeat_count &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.00216" />
+      </Event>
+      <Event name="command_write" mode="RUN" style="pinTransition" when="mmio_write_command &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.0024" />
+      </Event>
+      <Event name="mac_accumulate" mode="RUN" style="pinTransition" when="dataflow_op_valid &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
         <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.192" />
       </Event>
       <Event name="accumulator_clear" mode="RUN" style="pinTransition" when="mmio_command_clear &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
