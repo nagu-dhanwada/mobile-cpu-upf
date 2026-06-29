@@ -1,12 +1,17 @@
-module dataflow_unit (
+module dataflow_unit #(
+  parameter int RESPONSE_DELAY = 1
+) (
   input  logic        clk,
   input  logic        reset_n,
   input  logic        enable,
-  input  logic        req,
-  input  logic        we,
-  input  logic [1:0]  addr,
-  input  logic [31:0] wdata,
-  output logic [31:0] rdata,
+  input  logic        req_valid,
+  output logic        req_ready,
+  input  logic        req_we,
+  input  logic [1:0]  req_addr,
+  input  logic [31:0] req_wdata,
+  output logic        resp_valid,
+  output logic [31:0] resp_rdata,
+  output logic        resp_error,
   output logic        busy,
   output logic        op_valid,
   output logic [31:0] result
@@ -27,26 +32,45 @@ module dataflow_unit (
   logic               busy_q;
   logic               done_q;
   logic               op_valid_q;
-  logic               command_write_q;
-  logic               write_access;
+  logic               command_write_held_q;
+  logic               access_fire;
   logic               command_write_access;
   logic               command_write_pulse;
   logic [REPEAT_COUNT_WIDTH-1:0] repeat_count_effective;
+  logic               resp_pending_q;
+  logic [7:0]         resp_delay_q;
+  logic               resp_valid_q;
+  logic [31:0]        resp_rdata_q;
+  logic               resp_error_q;
   logic signed [31:0] product;
   logic [31:0]        status_word;
+  logic [31:0]        read_data;
+
+  function automatic [7:0] delay_reload(input int configured_delay);
+    if (configured_delay <= 1) begin
+      delay_reload = 8'd0;
+    end else if (configured_delay > 256) begin
+      delay_reload = 8'd255;
+    end else begin
+      delay_reload = configured_delay[7:0] - 8'd1;
+    end
+  endfunction
 
   assign product  = $signed(operand_a_q) * $signed(operand_b_q);
+  assign req_ready = enable && !resp_pending_q;
+  assign access_fire = req_valid && req_ready;
   assign busy     = busy_q;
   assign op_valid = op_valid_q;
   assign result   = acc_q;
-  assign write_access = enable && req && we;
+  assign resp_valid = resp_valid_q;
+  assign resp_rdata = resp_rdata_q;
+  assign resp_error = resp_error_q;
 
   // The command register is write-one-to-act, not a sticky control register.
-  // A held command bus cycle is accepted once so a constant command value does
-  // not launch a new MAC every clock. A future valid/ready bus would make the
-  // transaction boundary explicit.
-  assign command_write_access = write_access && (addr == ADDR_CMD_STATUS);
-  assign command_write_pulse  = command_write_access && !command_write_q;
+  // A held command request is accepted once so a constant command value does
+  // not launch a new MAC every clock.
+  assign command_write_access = access_fire && req_we && (req_addr == ADDR_CMD_STATUS);
+  assign command_write_pulse  = command_write_access && !command_write_held_q;
 
   assign repeat_count_effective = (repeat_count_q == '0) ? REPEAT_ONE : repeat_count_q;
 
@@ -65,12 +89,12 @@ module dataflow_unit (
   };
 
   always_comb begin
-    unique case (addr)
-      ADDR_OPERAND_A:  rdata = {{16{operand_a_q[15]}}, operand_a_q};
-      ADDR_OPERAND_B:  rdata = {{16{operand_b_q[15]}}, operand_b_q};
-      ADDR_CMD_STATUS: rdata = status_word;
-      ADDR_RESULT:     rdata = acc_q;
-      default: rdata = 32'h0000_0000;
+    unique case (req_addr)
+      ADDR_OPERAND_A:  read_data = {{16{operand_a_q[15]}}, operand_a_q};
+      ADDR_OPERAND_B:  read_data = {{16{operand_b_q[15]}}, operand_b_q};
+      ADDR_CMD_STATUS: read_data = status_word;
+      ADDR_RESULT:     read_data = acc_q;
+      default: read_data = 32'h0000_0000;
     endcase
   end
 
@@ -84,44 +108,66 @@ module dataflow_unit (
       busy_q      <= 1'b0;
       done_q      <= 1'b0;
       op_valid_q  <= 1'b0;
-      command_write_q <= 1'b0;
+      command_write_held_q <= 1'b0;
+      resp_pending_q <= 1'b0;
+      resp_delay_q <= 8'd0;
+      resp_valid_q <= 1'b0;
+      resp_rdata_q <= 32'h0000_0000;
+      resp_error_q <= 1'b0;
     end else begin
       op_valid_q <= 1'b0;
-      command_write_q <= command_write_access;
+      resp_valid_q <= 1'b0;
+      command_write_held_q <= req_valid && req_we && (req_addr == ADDR_CMD_STATUS);
 
       if (!enable) begin
-        command_write_q <= 1'b0;
+        command_write_held_q <= 1'b0;
+        resp_pending_q <= 1'b0;
+        resp_valid_q <= 1'b0;
       end else begin
         // This is an MMIO slave peripheral reached through the CPU load/store
-        // path. Operand/register writes are ordinary MMIO state updates; command
+        // bus. Operand/register writes are ordinary MMIO state updates; command
         // writes below are pulses that kick the local datapath.
-        if (write_access) begin
-          unique case (addr)
-            ADDR_OPERAND_A: operand_a_q <= wdata[15:0];
-            ADDR_OPERAND_B: operand_b_q <= wdata[15:0];
+        if (access_fire) begin
+          resp_pending_q <= 1'b1;
+          resp_delay_q <= delay_reload(RESPONSE_DELAY);
+          resp_rdata_q <= read_data;
+          resp_error_q <= 1'b0;
+
+          unique case (req_addr)
+            ADDR_OPERAND_A: if (req_we) operand_a_q <= req_wdata[15:0];
+            ADDR_OPERAND_B: if (req_we) operand_b_q <= req_wdata[15:0];
             ADDR_RESULT: begin
-              repeat_count_q <= (wdata[REPEAT_COUNT_WIDTH-1:0] == '0)
-                                ? REPEAT_ONE
-                                : wdata[REPEAT_COUNT_WIDTH-1:0];
+              if (req_we) begin
+                repeat_count_q <= (req_wdata[REPEAT_COUNT_WIDTH-1:0] == '0)
+                                  ? REPEAT_ONE
+                                  : req_wdata[REPEAT_COUNT_WIDTH-1:0];
+              end
             end
             default: begin
             end
           endcase
+        end else if (resp_pending_q) begin
+          if (resp_delay_q == 8'd0) begin
+            resp_pending_q <= 1'b0;
+            resp_valid_q <= 1'b1;
+          end else begin
+            resp_delay_q <= resp_delay_q - 8'd1;
+          end
         end
 
-        if (command_write_pulse && (wdata[1:0] != 2'b00)) begin
+        if (command_write_pulse && (req_wdata[1:0] != 2'b00)) begin
           busy_q      <= 1'b0;
           remaining_q <= '0;
           done_q      <= 1'b0;
 
           // Clear has priority. Command value 3 is therefore a deterministic
           // clear-then-start operation, so the first MAC accumulates from 0.
-          if (wdata[1]) begin
+          if (req_wdata[1]) begin
             acc_q <= 32'sh0000_0000;
           end
 
-          if (wdata[0]) begin
-            acc_q      <= (wdata[1] ? 32'sh0000_0000 : acc_q) + product;
+          if (req_wdata[0]) begin
+            acc_q      <= (req_wdata[1] ? 32'sh0000_0000 : acc_q) + product;
             op_valid_q <= 1'b1;
             if (repeat_count_effective > REPEAT_ONE) begin
               remaining_q <= repeat_count_effective - REPEAT_ONE;

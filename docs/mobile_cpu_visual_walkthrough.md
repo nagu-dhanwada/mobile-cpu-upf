@@ -25,6 +25,8 @@ flowchart LR
     D["decode_unit"]
     R["regfile"]
     X["execute_unit"]
+    LSU["load_store_unit"]
+    BUS["data_bus_interconnect"]
     M["data_sram"]
     DF["dataflow_unit"]
 
@@ -35,17 +37,22 @@ flowchart LR
     I --> D
     D --> R
     R --> X
-    X --> M
-    X --> DF
+    X --> LSU
+    LSU --> BUS
+    BUS --> M
+    BUS --> DF
+    CG1 --> BUS
     CG1 --> M
     CG1 --> DF
 ```
 
 The front end fetches a 16-bit instruction from `instr_rom`, the decode unit
 splits out opcode and register fields, the register file supplies operands, and
-the execute unit either performs an ALU operation or issues a load/store. Normal
-loads and stores access `data_sram`. Stores and loads to offsets `4`, `5`, `6`,
-and `7` access the memory-mapped `dataflow_unit`.
+the execute unit either performs an ALU operation or issues a load/store. Loads
+and stores go through a tiny single-outstanding `load_store_unit` and
+`data_bus_interconnect`, so the PC can stall while SRAM or MMIO returns a
+response. Normal loads and stores access `data_sram`. Stores and loads to
+offsets `4`, `5`, `6`, and `7` access the memory-mapped `dataflow_unit`.
 
 The `dataflow_unit` is a tiny multiply-accumulate block. It is still controlled
 as an MMIO slave, but it now has a small local repeat-count mode so software can

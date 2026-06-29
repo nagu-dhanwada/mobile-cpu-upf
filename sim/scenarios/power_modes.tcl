@@ -11,8 +11,10 @@
 reset 4
 
 # Let the selected program execute. Hand-written and generated workloads end
-# with WFI, which should produce an IDLE visit and clock-gating behavior.
-run_until_mode IDLE 80
+# with WFI, which should produce an IDLE visit and clock-gating behavior. The
+# budget covers the tiny request/response load-store bus latency as well as
+# generated probes with heavier MMIO traffic.
+run_until_mode IDLE 160
 expect_seen_mode IDLE
 
 # Exercise DVFS turbo and nominal transitions.

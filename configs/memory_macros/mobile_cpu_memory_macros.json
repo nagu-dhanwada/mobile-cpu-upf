@@ -46,12 +46,12 @@
       "events": {
         "read": {
           "energy_pj": 4.8,
-          "source": "mem_req && !mem_we",
+          "source": "sram_req && !sram_we",
           "description": "One 32-bit SRAM read."
         },
         "write": {
           "energy_pj": 6.3,
-          "source": "mem_req && mem_we",
+          "source": "sram_req && sram_we",
           "description": "One 32-bit SRAM write."
         }
       }

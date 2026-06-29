@@ -226,24 +226,30 @@ def build_datapath_animation() -> str:
       <text x="270" y="193" text-anchor="middle">decode</text>
       <rect x="372" y="152" width="120" height="72" rx="8" class="block cpu"/>
       <text x="432" y="193" text-anchor="middle">regfile</text>
-      <rect x="534" y="152" width="120" height="72" rx="8" class="block cpu"/>
-      <text x="594" y="193" text-anchor="middle">execute</text>
-      <rect x="704" y="90" width="130" height="72" rx="8" class="block mem"/>
-      <text x="769" y="131" text-anchor="middle">data_sram</text>
-      <rect x="704" y="212" width="130" height="72" rx="8" class="block cpu"/>
-      <text x="769" y="253" text-anchor="middle">dataflow_unit</text>
+      <rect x="534" y="152" width="108" height="72" rx="8" class="block cpu"/>
+      <text x="588" y="193" text-anchor="middle">execute</text>
+      <rect x="674" y="152" width="96" height="72" rx="8" class="block cpu"/>
+      <text x="722" y="193" text-anchor="middle">LSU</text>
+      <rect x="802" y="152" width="104" height="72" rx="8" class="block mem"/>
+      <text x="854" y="193" text-anchor="middle">data bus</text>
+      <rect x="802" y="48" width="130" height="72" rx="8" class="block mem"/>
+      <text x="867" y="89" text-anchor="middle">data_sram</text>
+      <rect x="802" y="256" width="130" height="72" rx="8" class="block cpu"/>
+      <text x="867" y="297" text-anchor="middle">dataflow_unit</text>
       <path d="M330,78 H372" class="edge"/>
       <path d="M432,114 V132 C432,145 330,137 302,152" class="edge"/>
       <path d="M330,188 H372" class="edge"/>
       <path d="M492,188 H534" class="edge"/>
-      <path d="M654,174 C680,150 682,128 704,126" class="edge"/>
-      <path d="M654,205 C683,228 681,248 704,248" class="edge"/>
+      <path d="M642,188 H674" class="edge"/>
+      <path d="M770,188 H802" class="edge"/>
+      <path d="M854,152 C854,124 858,102 867,120" class="edge"/>
+      <path d="M854,224 C854,246 858,270 867,256" class="edge"/>
       <path d="M158,78 H210" class="edge dashed"/>
       <circle r="8" class="packet packet-fetch"><animateMotion dur="4.8s" repeatCount="indefinite" path="M270,78 H432 V114 V132 C432,145 330,137 302,152 H270"/></circle>
-      <circle r="8" class="packet packet-exec"><animateMotion dur="4.8s" repeatCount="indefinite" begin="1.0s" path="M270,188 H432 H594"/></circle>
-      <circle r="8" class="packet packet-mem"><animateMotion dur="4.8s" repeatCount="indefinite" begin="2.1s" path="M594,188 C680,150 682,128 769,126"/></circle>
-      <circle r="8" class="packet packet-df"><animateMotion dur="4.8s" repeatCount="indefinite" begin="2.8s" path="M594,188 C683,228 681,248 769,248"/></circle>
-      <text x="28" y="326" class="caption">Packets show instruction fetch/decode/execute, load-store traffic, and MMIO offload into the dataflow MAC unit.</text>
+      <circle r="8" class="packet packet-exec"><animateMotion dur="4.8s" repeatCount="indefinite" begin="1.0s" path="M270,188 H432 H588"/></circle>
+      <circle r="8" class="packet packet-mem"><animateMotion dur="4.8s" repeatCount="indefinite" begin="2.1s" path="M588,188 H722 H854 C854,124 858,102 867,84"/></circle>
+      <circle r="8" class="packet packet-df"><animateMotion dur="4.8s" repeatCount="indefinite" begin="2.8s" path="M588,188 H722 H854 C854,246 858,270 867,292"/></circle>
+      <text x="28" y="344" class="caption">Packets show instruction fetch/decode/execute, LSU request/response traffic, SRAM access, and MMIO offload into the dataflow MAC unit.</text>
     </svg>
     """
 
@@ -550,4 +556,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

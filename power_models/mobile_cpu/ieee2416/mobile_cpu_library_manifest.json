@@ -10,10 +10,12 @@
     "decode_unit",
     "regfile",
     "execute_unit",
+    "load_store_unit",
+    "data_bus_interconnect",
     "data_sram",
     "dataflow_unit",
     "power_controller"
   ],
-  "cell_count": 8,
+  "cell_count": 10,
   "format": "OpenLowPower IEEE 2416 Library"
 }

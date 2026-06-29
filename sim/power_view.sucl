@@ -22,6 +22,17 @@ divider_add Clock_gating
 variable_add TOP.mobile_cpu_power_top.core_clk_en
 variable_add TOP.mobile_cpu_power_top.mem_clk_en
 
+divider_add Load_store_bus
+variable_add TOP.mobile_cpu_power_top.u_dut.lsu_stall
+variable_add TOP.mobile_cpu_power_top.u_dut.bus_req_valid
+variable_add TOP.mobile_cpu_power_top.u_dut.bus_req_ready
+variable_add TOP.mobile_cpu_power_top.u_dut.bus_req_we
+variable_add TOP.mobile_cpu_power_top.u_dut.bus_req_addr
+variable_add TOP.mobile_cpu_power_top.u_dut.bus_req_wdata
+variable_add TOP.mobile_cpu_power_top.u_dut.bus_resp_valid
+variable_add TOP.mobile_cpu_power_top.u_dut.bus_resp_rdata
+variable_add TOP.mobile_cpu_power_top.u_dut.bus_resp_error
+
 divider_add Power_gating
 variable_add TOP.mobile_cpu_power_top.cpu_power_gate_n
 variable_add TOP.mobile_cpu_power_top.mem_power_gate_n

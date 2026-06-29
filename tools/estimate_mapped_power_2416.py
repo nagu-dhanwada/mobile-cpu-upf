@@ -35,6 +35,8 @@ BLOCK_DOMAINS = {
     "decode_unit": "PD_CPU",
     "regfile": "PD_CPU",
     "execute_unit": "PD_CPU",
+    "load_store_unit": "PD_CPU",
+    "data_bus_interconnect": "PD_MEM",
     "data_sram": "PD_MEM",
     "power_controller": "PD_AON",
 }
@@ -45,6 +47,8 @@ BLOCK_CLOCKS = {
     "decode_unit": "none",
     "regfile": "core",
     "execute_unit": "none",
+    "load_store_unit": "core",
+    "data_bus_interconnect": "mem",
     "data_sram": "mem",
     "power_controller": "top",
 }
@@ -55,6 +59,8 @@ GATE_BLOCK_PATHS = {
     "decode_unit": "TOP.mobile_cpu_top.u_decode",
     "regfile": "TOP.mobile_cpu_top.u_regfile",
     "execute_unit": "TOP.mobile_cpu_top.u_execute",
+    "load_store_unit": "TOP.mobile_cpu_top.u_lsu",
+    "data_bus_interconnect": "TOP.mobile_cpu_top.u_dbus",
     "data_sram": "TOP.mobile_cpu_top.u_dmem",
     "power_controller": "TOP.mobile_cpu_top.u_power_controller",
 }

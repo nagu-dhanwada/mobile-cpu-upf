@@ -14,6 +14,8 @@ BLOCK_MODULES = {
     "decode_unit": "decode_unit",
     "regfile": "regfile",
     "execute_unit": "execute_unit",
+    "load_store_unit": "load_store_unit",
+    "data_bus_interconnect": "data_bus_interconnect",
     "data_sram": "data_sram",
     "power_controller": "power_controller",
 }

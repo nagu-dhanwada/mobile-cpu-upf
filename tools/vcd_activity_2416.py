@@ -17,6 +17,8 @@ BLOCK_PATHS = {
     "decode_unit": f"{DUT}.u_decode",
     "regfile": f"{DUT}.u_regfile",
     "execute_unit": f"{DUT}.u_execute",
+    "load_store_unit": f"{DUT}.u_lsu",
+    "data_bus_interconnect": f"{DUT}.u_dbus",
     "data_sram": f"{DUT}.u_dmem",
     "dataflow_unit": f"{DUT}.u_dataflow",
     "power_controller": f"{DUT}.u_power_controller",
@@ -292,6 +294,12 @@ class VcdActivityExtractor:
             return
         self.clock_cycles["mem"] += 1
         self.clock_cycles_by_dvfs["mem"][self._dvfs()] += 1
+        if bit_value(self._value(f"{DUT}.bus_req_valid")) and bit_value(self._value(f"{DUT}.bus_req_ready")):
+            self._sample_data_bus_request()
+        if bit_value(self._value(f"{DUT}.bus_resp_valid")):
+            self._add_event("load_store_unit", "response_complete")
+            if bit_value(self._value(f"{DUT}.bus_resp_error")):
+                self._add_event("load_store_unit", "error_response")
         if bit_value(self._value(f"{DUT}.dataflow_op_valid")):
             self._add_event("dataflow_unit", "mac_accumulate")
 
@@ -303,6 +311,8 @@ class VcdActivityExtractor:
 
         self.clock_cycles["core"] += 1
         self.clock_cycles_by_dvfs["core"][self._dvfs()] += 1
+        if bit_value(self._value(f"{DUT}.lsu_stall")):
+            self._add_event("load_store_unit", "stall_cycle")
 
         instr = int_value(self._value(f"{DUT}.instr"))
         opcode = (instr >> 12) & 0xF
@@ -329,18 +339,20 @@ class VcdActivityExtractor:
         if opcode in {0x1, 0x2, 0x3, 0x4, 0x5, 0x6}:
             self._add_event("regfile", "write")
 
-        if opcode in {0x6, 0x7}:
-            self._sample_memory_mapped_event(opcode)
-
         if opcode == 0x8 and bit_value(self._value(f"{DUT}.branch_taken")):
             self._add_event("fetch_unit", "branch_redirect")
 
-    def _sample_memory_mapped_event(self, opcode: int) -> None:
-        mem_addr = int_value(self._value(f"{DUT}.mem_addr"))
-        mem_wdata = int_value(self._value(f"{DUT}.mem_wdata"))
-        if DATAFLOW_MMIO_BASE <= mem_addr <= DATAFLOW_MMIO_LIMIT:
-            offset = mem_addr - DATAFLOW_MMIO_BASE
-            if opcode == 0x6:
+    def _sample_data_bus_request(self) -> None:
+        bus_addr = int_value(self._value(f"{DUT}.bus_req_addr"))
+        bus_wdata = int_value(self._value(f"{DUT}.bus_req_wdata"))
+        bus_we = bit_value(self._value(f"{DUT}.bus_req_we"))
+        self._add_event("load_store_unit", "request_issue")
+        self._add_event("data_bus_interconnect", "address_decode")
+
+        if DATAFLOW_MMIO_BASE <= bus_addr <= DATAFLOW_MMIO_LIMIT:
+            self._add_event("data_bus_interconnect", "mmio_route")
+            offset = bus_addr - DATAFLOW_MMIO_BASE
+            if not bus_we:
                 if offset == 2:
                     self._add_event("dataflow_unit", "status_read")
                 elif offset == 3:
@@ -352,16 +364,20 @@ class VcdActivityExtractor:
                     self._add_event("dataflow_unit", "operand_write")
                 elif offset == 2:
                     self._add_event("dataflow_unit", "command_write")
-                    if mem_wdata & 0x2:
+                    if bus_wdata & 0x2:
                         self._add_event("dataflow_unit", "accumulator_clear")
                 else:
                     self._add_event("dataflow_unit", "repeat_count_write")
             return
 
-        if opcode == 0x6:
-            self._add_event("data_sram", "read")
-        elif opcode == 0x7:
+        if bus_addr >> 10:
+            self._add_event("data_bus_interconnect", "error_route")
+        else:
+            self._add_event("data_bus_interconnect", "sram_route")
+        if bus_we:
             self._add_event("data_sram", "write")
+        else:
+            self._add_event("data_sram", "read")
 
     def _to_dict(self) -> dict:
         return {

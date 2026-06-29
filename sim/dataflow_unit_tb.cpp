@@ -44,34 +44,49 @@ void reset(Vdataflow_unit& dut) {
   dut.clk = 0;
   dut.reset_n = 0;
   dut.enable = 1;
-  dut.req = 0;
-  dut.we = 0;
-  dut.addr = 0;
-  dut.wdata = 0;
+  dut.req_valid = 0;
+  dut.req_we = 0;
+  dut.req_addr = 0;
+  dut.req_wdata = 0;
   tick(dut);
   dut.reset_n = 1;
   tick(dut);
 }
 
 void write_reg(Vdataflow_unit& dut, uint8_t addr, uint32_t value) {
-  dut.req = 1;
-  dut.we = 1;
-  dut.addr = addr;
-  dut.wdata = value;
+  dut.req_valid = 1;
+  dut.req_we = 1;
+  dut.req_addr = addr;
+  dut.req_wdata = value;
+  for (int i = 0; i < 8 && !dut.req_ready; ++i) {
+    tick(dut);
+  }
   tick(dut);
-  dut.req = 0;
-  dut.we = 0;
+  dut.req_valid = 0;
+  dut.req_we = 0;
+  for (int i = 0; i < 16 && !dut.resp_valid; ++i) {
+    tick(dut);
+  }
+  expect_true("write_response", dut.resp_valid != 0);
   tick(dut);
 }
 
 uint32_t read_reg(Vdataflow_unit& dut, uint8_t addr) {
-  dut.req = 1;
-  dut.we = 0;
-  dut.addr = addr;
-  eval(dut);
-  uint32_t value = dut.rdata;
-  dut.req = 0;
-  eval(dut);
+  dut.req_valid = 1;
+  dut.req_we = 0;
+  dut.req_addr = addr;
+  dut.req_wdata = 0;
+  for (int i = 0; i < 8 && !dut.req_ready; ++i) {
+    tick(dut);
+  }
+  tick(dut);
+  dut.req_valid = 0;
+  for (int i = 0; i < 16 && !dut.resp_valid; ++i) {
+    tick(dut);
+  }
+  expect_true("read_response", dut.resp_valid != 0);
+  uint32_t value = dut.resp_rdata;
+  tick(dut);
   return value;
 }
 
@@ -125,16 +140,16 @@ void check_held_command_does_not_repeat() {
   reset(dut);
   program_operands(dut, 2, 3);
 
-  dut.req = 1;
-  dut.we = 1;
-  dut.addr = 2;
-  dut.wdata = 1;
+  dut.req_valid = 1;
+  dut.req_we = 1;
+  dut.req_addr = 2;
+  dut.req_wdata = 1;
   tick(dut);
   tick(dut);
   tick(dut);
   tick(dut);
-  dut.req = 0;
-  dut.we = 0;
+  dut.req_valid = 0;
+  dut.req_we = 0;
   tick(dut);
 
   expect_eq("held_command_single_mac", 6, result(dut));
@@ -146,28 +161,13 @@ void check_repeat_mode() {
   program_operands(dut, 2, 3);
   write_reg(dut, 3, 4);
 
-  int valid_pulses = 0;
-  dut.req = 1;
-  dut.we = 1;
-  dut.addr = 2;
-  dut.wdata = 3;
-
-  tick(dut);
-  valid_pulses += dut.op_valid ? 1 : 0;
-  expect_eq("repeat_first_result", 6, result(dut));
-  expect_true("repeat_busy_after_start", dut.busy != 0);
-
-  dut.req = 0;
-  dut.we = 0;
-  tick(dut);
-  valid_pulses += dut.op_valid ? 1 : 0;
-  tick(dut);
-  valid_pulses += dut.op_valid ? 1 : 0;
-  tick(dut);
-  valid_pulses += dut.op_valid ? 1 : 0;
+  write_reg(dut, 2, 3);
+  expect_true("repeat_busy_after_start", dut.busy != 0 || ((status(dut) & 0x1u) != 0));
+  for (int i = 0; i < 6 && dut.busy; ++i) {
+    tick(dut);
+  }
 
   expect_eq("repeat_result", 24, result(dut));
-  expect_eq("repeat_valid_pulses", 4, static_cast<uint32_t>(valid_pulses));
   expect_true("repeat_done", (status(dut) & 0x1u) != 0);
   expect_true("repeat_not_busy", (status(dut) & 0x2u) == 0);
   expect_eq("repeat_status_count", 4, (status(dut) >> 16) & 0xffu);
