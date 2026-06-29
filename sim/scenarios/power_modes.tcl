@@ -2,6 +2,7 @@
 # Commands supported by sim/power_aware_tb.cpp:
 #   reset <cycles>
 #   run <cycles>
+#   run_until_mode <RUN|IDLE|LIGHT_SLEEP|DEEP_SLEEP|WAKE> <max_cycles>
 #   set <signal> <0|1>
 #   pulse <signal> [cycles]
 #   expect <signal> <value|RUN|IDLE|LIGHT_SLEEP|DEEP_SLEEP|WAKE>
@@ -11,7 +12,7 @@ reset 4
 
 # Let the selected program execute. Hand-written and generated workloads end
 # with WFI, which should produce an IDLE visit and clock-gating behavior.
-run 48
+run_until_mode IDLE 80
 expect_seen_mode IDLE
 
 # Exercise DVFS turbo and nominal transitions.

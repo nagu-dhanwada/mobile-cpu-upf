@@ -3,10 +3,8 @@
 This repository has an additive synthesis layer on top of the existing RTL,
 UPF, Joules, and IEEE 2416 power flows.
 
-The synthesis-calibrated and mapped power estimates currently use the
-legacy/simple XML estimator because the real-XSD OpenLowPower standard-cell and
-memory-macro model path is still future work. The compatibility targets keep
-their familiar names, but they print a note and delegate to `legacy2416-*`.
+The synthesis-calibrated and mapped power estimates use the same real-XSD
+OpenLowPower IEEE 2416 `Library` XML structure as the RTL power flow.
 
 The implementation uses Yosys as the open-source synthesis engine and
 Verilator for functional post-synthesis simulation. It has two synthesis modes:
@@ -87,7 +85,7 @@ visible behavior:
 
 This is functional GLS. It is not yet timing/SDF simulation.
 
-## Generate Synthesis-Calibrated Legacy 2416-Style Models
+## Generate Synthesis-Calibrated IEEE 2416 Models
 
 ```sh
 make 2416-synth-power WORKLOAD=memory_burst TECH=generic_7nm
@@ -95,19 +93,20 @@ make 2416-synth-power WORKLOAD=memory_burst TECH=generic_7nm
 
 This does three things:
 
-1. Generates the legacy/simple RTL macro models.
-2. Runs Yosys synthesis and extracts cell metrics.
-3. Creates synthesis-calibrated legacy XML models under:
+1. Runs Yosys synthesis and extracts cell metrics.
+2. Creates a synthesis-calibrated OpenLowPower IEEE 2416 library.
+3. Validates that library against the OpenLowPower IEEE 2416 XSD and estimates
+   power from workload VCD activity.
 
 ```text
-power_models/mobile_cpu/legacy2416/synth/
+power_models/mobile_cpu/ieee2416/mobile_cpu_synth_library.xml
 ```
 
 The generated models use:
 
 ```text
-modelClass = synthesisCalibratedMacro
-abstractionLevel = gate
+model_class = synthesis_calibrated_macro
+abstraction_level = gate
 ```
 
 The power estimator then evaluates those synth-calibrated models against the
@@ -122,7 +121,7 @@ synthesis-calibrated macro estimate
 The output report is written under:
 
 ```text
-reports/legacy2416_synth/<workload>_<tech>/
+reports/2416_synth/<workload>_<tech>_<scheme>/
 ```
 
 ## What Is Calibrated
@@ -182,11 +181,11 @@ implementation distinction between standard-cell logic and memory macros.
 
 ## 2416 Models At The Mapped Level
 
-The mapped flow adds two legacy/simple model families:
+The mapped flow adds two OpenLowPower IEEE 2416 implementation model families:
 
 ```text
-power_models/stdcells/nangate45/*.xml
-power_models/mobile_cpu/legacy2416/macros/*.xml
+power_models/stdcells/nangate45/nangate45_stdcells_library.xml
+power_models/mobile_cpu/ieee2416/mobile_cpu_memory_macros.xml
 ```
 
 The standard-cell XML models are generated from Liberty area, leakage,
@@ -210,7 +209,7 @@ make 2416-compare-abstractions WORKLOAD=memory_burst TECH=generic_7nm
 Example output:
 
 ```text
-reports/legacy2416_compare/memory_burst_generic_7nm_nangate45/2416_abstraction_compare.md
+reports/2416_compare/memory_burst_generic_7nm_dvfs_retention_domains_nangate45/2416_abstraction_compare.md
 ```
 
 This is the intended abstraction progression:

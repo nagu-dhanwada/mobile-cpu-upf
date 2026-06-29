@@ -83,6 +83,10 @@ Generate a different spec:
 make gen-workload GEN_WORKLOAD=sleep_wake_probe
 ```
 
+The `GEN_WORKLOAD` value selects `workload_specs/<name>.json`, and the JSON
+`name` field must match that same value. This keeps the generated assembly,
+manifest, and later profile commands aligned.
+
 Assemble the generated workload:
 
 ```sh
@@ -131,4 +135,3 @@ This first layer is deterministic. It does not yet search for a workload that
 matches a target measured profile. The next natural step is a feedback loop:
 generate a candidate workload, simulate/profile it, compare measured metrics
 against the target, then adjust the intent or generation pass.
-

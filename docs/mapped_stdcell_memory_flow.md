@@ -3,10 +3,8 @@
 This phase moves the toy CPU one step closer to an implementation flow while
 preserving the earlier RTL, UPF, Joules, and IEEE 2416 modes.
 
-The mapped estimator currently uses the legacy/simple XML model family. The
-real-XSD OpenLowPower `2416-power` path remains the primary standards-oriented
-RTL flow; this mapped layer is kept separate until the standard-cell and
-memory-macro representation is upgraded to the fuller XSD.
+The mapped estimator uses real-XSD OpenLowPower IEEE 2416 `Library` XML models
+for both standard cells and memory macros.
 
 ## Architecture
 
@@ -21,16 +19,16 @@ RTL logic + memory blackboxes + Nangate45 Liberty
   -> build/mapped/nangate45/<name>/mobile_cpu_mapped_metrics.json
 
 Liberty
-  -> tools/gen_2416_stdcell.py
-  -> power_models/stdcells/nangate45/*.xml
+  -> tools/ieee2416/stdcell.py
+  -> power_models/stdcells/nangate45/nangate45_stdcells_library.xml
 
 memory macro config
-  -> tools/gen_memory_macro_2416.py
-  -> power_models/mobile_cpu/legacy2416/macros/*.xml
+  -> tools/ieee2416/memory_macros.py
+  -> power_models/mobile_cpu/ieee2416/mobile_cpu_memory_macros.xml
 
 RTL workload VCD + mapped gate VCD + models
   -> tools/estimate_mapped_power_2416.py
-  -> reports/legacy2416_mapped/nangate45/<name>_<tech>/
+  -> reports/2416_mapped/nangate45/<name>_<tech>_<scheme>/
 ```
 
 ## Why Keep Memories As Macros
@@ -64,11 +62,13 @@ make 2416-compare-abstractions WORKLOAD=memory_burst TECH=generic_7nm
   shows mapped cell counts by CPU block.
 - `power_models/stdcells/nangate45/stdcell_model_summary.md`
   summarizes generated standard-cell coefficients.
-- `power_models/mobile_cpu/legacy2416/macros/data_sram.xml`
-  shows the memory macro model and its read/write contributors.
-- `reports/legacy2416_mapped/nangate45/memory_burst_generic_7nm/2416_power_summary.md`
+- `power_models/stdcells/nangate45/nangate45_stdcells_library.xml`
+  contains OpenLowPower IEEE 2416 models for the Liberty cells.
+- `power_models/mobile_cpu/ieee2416/mobile_cpu_memory_macros.xml`
+  contains the memory macro models and their read/write contributors.
+- `reports/2416_mapped/nangate45/memory_burst_generic_7nm_dvfs_retention_domains/2416_power_summary.md`
   shows mapped power by domain and block.
-- `reports/legacy2416_compare/memory_burst_generic_7nm_nangate45/2416_abstraction_compare.md`
+- `reports/2416_compare/memory_burst_generic_7nm_dvfs_retention_domains_nangate45/2416_abstraction_compare.md`
   compares RTL, synthesis-calibrated, and mapped estimates.
 
 ## Current Limitations

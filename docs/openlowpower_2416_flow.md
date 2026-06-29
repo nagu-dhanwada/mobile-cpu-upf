@@ -99,13 +99,17 @@ For a paired CPU-only versus dataflow-assisted experiment:
 make compare-dataflow TECH=generic_7nm SCHEME=dvfs_retention_domains
 ```
 
-## Relationship To The Existing Flow
+## Additional Abstraction Levels
 
-The repository also keeps the original compact XML experiment under
-`legacy2416-*`. That path uses `legacy/simple_2416_schema/schema_profile.json`
-to generate a small educational XSD, then writes simplified XML under
-`power_models/mobile_cpu/legacy2416/`.
+The same real-XSD path is used for the other model abstraction levels:
 
-Use `legacy2416-*` only when you intentionally want that compact bootstrap
-format. For normal IEEE 2416 exploration with the uploaded XSD, use the plain
-`2416-*` targets in this guide.
+```sh
+make 2416-dvfs-explore WORKLOAD=memory_burst TECH=generic_7nm
+make 2416-synth-power WORKLOAD=memory_burst TECH=generic_7nm
+make 2416-mapped-power WORKLOAD=memory_burst TECH=generic_7nm
+make 2416-compare-abstractions WORKLOAD=memory_burst TECH=generic_7nm
+```
+
+These targets generate and validate OpenLowPower IEEE 2416 libraries for RTL
+macros, synthesis-calibrated CPU macros, Liberty standard cells, and memory
+macros before producing reports.

@@ -392,6 +392,14 @@ class PowerAwareSim {
         int cycles = 1;
         stream >> cycles;
         run_cycles(cycles);
+      } else if (command == "run_until_mode") {
+        std::string expected;
+        int max_cycles = 1;
+        stream >> expected;
+        if (!(stream >> max_cycles)) {
+          max_cycles = 1;
+        }
+        run_until_mode(expected, max_cycles, line_no);
       } else if (command == "set") {
         std::string signal;
         int value = 0;
@@ -447,6 +455,30 @@ class PowerAwareSim {
       tick();
       check_scripted_power_invariants();
     }
+  }
+
+  void run_until_mode(const std::string& expected, int max_cycles, int line_no) {
+    const int expected_mode = mode_value(expected);
+    if (expected_mode < 0 || expected_mode >= 8) {
+      require(false, "scenario_run_until_mode",
+              "Unknown mode " + expected + " at line " + std::to_string(line_no));
+      return;
+    }
+
+    for (int i = 0; i < max_cycles; ++i) {
+      tick();
+      check_scripted_power_invariants();
+      if (mode() == expected_mode) {
+        require(true, "scenario_run_until_mode",
+                "Reached mode " + expected + " within " + std::to_string(max_cycles) +
+                    " cycles at line " + std::to_string(line_no));
+        return;
+      }
+    }
+
+    require(false, "scenario_run_until_mode",
+            "Expected mode " + expected + " within " + std::to_string(max_cycles) +
+                " cycles at line " + std::to_string(line_no));
   }
 
   void set_input(const std::string& signal, bool value) {

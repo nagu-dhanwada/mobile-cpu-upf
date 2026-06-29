@@ -1,0 +1,184 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Library xmlns="OpenLowPower" name="mobile_cpu_memory_macros_ieee2416" version="0.1.0" condition="mobile_cpu_memory_macros_nominal" datagen="estimated">
+  <annotation>Generated OpenLowPower IEEE 2416 memory macro library for the mobile CPU.</annotation>
+  <Technology name="mobile_cpu_memory_macros" version="1.0">
+    <Process name="macro_nominal" />
+  </Technology>
+  <Units>
+    <Unit name="currentUnit" value="mA" />
+    <Unit name="capacitanceUnit" value="fF" />
+    <Unit name="resistanceUnit" value="ohm" />
+    <Unit name="dimensionUnit" value="nM" />
+    <Unit name="frequencyUnit" value="MHz" />
+    <Unit name="powerUnit" value="mW" />
+    <Unit name="energyUnit" value="pJ" />
+    <Unit name="voltageUnit" value="V" />
+    <Unit name="temperatureTcUnit" value="C" />
+    <Unit name="temperatureTkUnit" value="K" />
+    <Unit name="temperatureUnit" value="C" />
+    <Unit name="timeUnit" value="nS" />
+  </Units>
+  <LibraryConditions name="mobile_cpu_memory_macros_nominal">
+    <Condition name="process_corner" value="macro_nominal" />
+    <Condition name="temperature_c" value="25" />
+    <Condition name="reference_voltage_v" value="1.1" />
+  </LibraryConditions>
+  <LibraryParameters>
+    <Parameter name="reference_voltage_v" value="1.1" type="float" dataType="float" units="V" />
+    <Parameter name="dynamic_voltage_exponent" value="2" type="float" dataType="float" units="Enumerated" />
+    <Parameter name="leakage_voltage_exponent" value="1.2" type="float" dataType="float" units="Enumerated" />
+    <Parameter name="reference_temperature_c" value="25" type="float" dataType="float" units="C" />
+    <Parameter name="leakage_per_10c_factor" value="1.35" type="float" dataType="float" units="Enumerated" />
+  </LibraryParameters>
+  <Cell name="instr_rom" condition="mobile_cpu_memory_macros_nominal" datagen="estimated">
+    <Pins>
+      <Pin name="VDD" direction="pg" pinType="primaryPower" />
+      <Pin name="VSS" direction="pg" pinType="primaryGround" />
+      <Pin name="activity" direction="input" dataType="bit" pinType="signal" relatedPower="VDD" relatedGround="VSS" />
+      <Pin name="power_mode" width="[2:0]" direction="input" dataType="integer" pinType="signal" relatedPower="VDD" relatedGround="VSS" />
+    </Pins>
+    <Modes mutuallyExclusive="true" defaultMode="RUN" initialMode="RUN">
+      <Mode name="RUN" when="power_mode == RUN" value="0">
+        <Expression>mode_is_run &amp;&amp; clock_combinational &amp;&amp; supply_on</Expression>
+      </Mode>
+      <Mode name="IDLE" when="power_mode == IDLE" value="1">
+        <Expression>mode_is_idle &amp;&amp; clock_combinational &amp;&amp; supply_on</Expression>
+      </Mode>
+      <Mode name="LIGHT_SLEEP" when="power_mode == LIGHT_SLEEP" value="2">
+        <Expression>mode_is_light_sleep &amp;&amp; clock_combinational &amp;&amp; supply_retention</Expression>
+      </Mode>
+      <Mode name="DEEP_SLEEP" when="power_mode == DEEP_SLEEP" value="3">
+        <Expression>mode_is_deep_sleep &amp;&amp; clock_combinational &amp;&amp; supply_off</Expression>
+      </Mode>
+      <Mode name="WAKE" when="power_mode == WAKE" value="4">
+        <Expression>mode_is_wake &amp;&amp; clock_combinational &amp;&amp; supply_on</Expression>
+      </Mode>
+    </Modes>
+    <Events>
+      <Event name="instruction_fetch" mode="RUN" style="pinTransition" when="instruction fetch address sample &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.72" />
+      </Event>
+    </Events>
+    <ModelParameters>
+      <Parameter name="module" value="instr_rom" dataType="string" />
+      <Parameter name="rtl_path" value="TOP.mobile_cpu_top.u_icache" dataType="string" />
+      <Parameter name="power_domain" value="PD_CPU" dataType="string" />
+      <Parameter name="clock_name" value="none" dataType="string" />
+      <Parameter name="model_class" value="memory_macro" dataType="string" />
+      <Parameter name="abstraction_level" value="macro" dataType="string" />
+      <Parameter name="area_um2" value="145" dataType="float" />
+      <Parameter name="reference_voltage_v" value="1.1" dataType="float" />
+      <Parameter name="dynamic_voltage_exponent" value="2" dataType="float" />
+      <Parameter name="leakage_voltage_exponent" value="1.2" dataType="float" />
+      <Parameter name="param_depth_words" value="64" dataType="string" />
+      <Parameter name="param_width_bits" value="16" dataType="string" />
+      <Parameter name="param_kind" value="rom" dataType="string" />
+    </ModelParameters>
+    <States units="mW" mutuallyExclusive="true">
+      <State name="RUN" when="power_mode == RUN" units="mW">
+        <StaticPower value="0.0032" units="mW" source="VDD" sink="VSS">
+          <Expression>0.0032 * leakage_voltage_scale * leakage_temperature_scale</Expression>
+        </StaticPower>
+      </State>
+      <State name="IDLE" when="power_mode == IDLE" units="mW">
+        <StaticPower value="0.002624" units="mW" source="VDD" sink="VSS">
+          <Expression>0.002624 * leakage_voltage_scale * leakage_temperature_scale</Expression>
+        </StaticPower>
+      </State>
+      <State name="LIGHT_SLEEP" when="power_mode == LIGHT_SLEEP" units="mW">
+        <StaticPower value="0.0011" units="mW" source="VDD" sink="VSS">
+          <Expression>0.0011 * leakage_voltage_scale * leakage_temperature_scale</Expression>
+        </StaticPower>
+      </State>
+      <State name="DEEP_SLEEP" when="power_mode == DEEP_SLEEP" units="mW">
+        <StaticPower value="0.00008" units="mW" source="VDD" sink="VSS">
+          <Expression>0.00008 * leakage_voltage_scale * leakage_temperature_scale</Expression>
+        </StaticPower>
+      </State>
+      <State name="WAKE" when="power_mode == WAKE" units="mW">
+        <StaticPower value="0.0032" units="mW" source="VDD" sink="VSS">
+          <Expression>0.0032 * leakage_voltage_scale * leakage_temperature_scale</Expression>
+        </StaticPower>
+      </State>
+    </States>
+  </Cell>
+  <Cell name="data_sram" condition="mobile_cpu_memory_macros_nominal" datagen="estimated">
+    <Pins>
+      <Pin name="VDD" direction="pg" pinType="primaryPower" />
+      <Pin name="VSS" direction="pg" pinType="primaryGround" />
+      <Pin name="clk" direction="input" dataType="bit" pinType="clock" relatedPower="VDD" relatedGround="VSS" />
+      <Pin name="activity" direction="input" dataType="bit" pinType="signal" relatedPower="VDD" relatedGround="VSS" />
+      <Pin name="power_mode" width="[2:0]" direction="input" dataType="integer" pinType="signal" relatedPower="VDD" relatedGround="VSS" />
+    </Pins>
+    <Modes mutuallyExclusive="true" defaultMode="RUN" initialMode="RUN">
+      <Mode name="RUN" when="power_mode == RUN" value="0">
+        <Expression>mode_is_run &amp;&amp; clock_enabled &amp;&amp; supply_on</Expression>
+      </Mode>
+      <Mode name="IDLE" when="power_mode == IDLE" value="1">
+        <Expression>mode_is_idle &amp;&amp; clock_gated &amp;&amp; supply_on</Expression>
+      </Mode>
+      <Mode name="LIGHT_SLEEP" when="power_mode == LIGHT_SLEEP" value="2">
+        <Expression>mode_is_light_sleep &amp;&amp; clock_gated &amp;&amp; supply_retention</Expression>
+      </Mode>
+      <Mode name="DEEP_SLEEP" when="power_mode == DEEP_SLEEP" value="3">
+        <Expression>mode_is_deep_sleep &amp;&amp; clock_retained &amp;&amp; supply_off</Expression>
+      </Mode>
+      <Mode name="WAKE" when="power_mode == WAKE" value="4">
+        <Expression>mode_is_wake &amp;&amp; clock_enabled &amp;&amp; supply_on</Expression>
+      </Mode>
+    </Modes>
+    <Events>
+      <Event name="clock_cycle" mode="RUN" style="pinTransition" when="mem_clock_enabled &amp;&amp; domain_on" inputPin="clk" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.01" />
+      </Event>
+      <Event name="read" mode="RUN" style="pinTransition" when="mem_req &amp;&amp; !mem_we &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="4.8" />
+      </Event>
+      <Event name="write" mode="RUN" style="pinTransition" when="mem_req &amp;&amp; mem_we &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="6.3" />
+      </Event>
+    </Events>
+    <ModelParameters>
+      <Parameter name="module" value="data_sram" dataType="string" />
+      <Parameter name="rtl_path" value="TOP.mobile_cpu_top.u_dmem" dataType="string" />
+      <Parameter name="power_domain" value="PD_MEM" dataType="string" />
+      <Parameter name="clock_name" value="mem" dataType="string" />
+      <Parameter name="model_class" value="memory_macro" dataType="string" />
+      <Parameter name="abstraction_level" value="macro" dataType="string" />
+      <Parameter name="area_um2" value="1800" dataType="float" />
+      <Parameter name="reference_voltage_v" value="1.1" dataType="float" />
+      <Parameter name="dynamic_voltage_exponent" value="2" dataType="float" />
+      <Parameter name="leakage_voltage_exponent" value="1.2" dataType="float" />
+      <Parameter name="param_depth_words" value="256" dataType="string" />
+      <Parameter name="param_width_bits" value="32" dataType="string" />
+      <Parameter name="param_kind" value="sram" dataType="string" />
+    </ModelParameters>
+    <States units="mW" mutuallyExclusive="true">
+      <State name="RUN" when="power_mode == RUN" units="mW">
+        <StaticPower value="0.018" units="mW" source="VDD" sink="VSS">
+          <Expression>0.018 * leakage_voltage_scale * leakage_temperature_scale</Expression>
+        </StaticPower>
+      </State>
+      <State name="IDLE" when="power_mode == IDLE" units="mW">
+        <StaticPower value="0.01476" units="mW" source="VDD" sink="VSS">
+          <Expression>0.01476 * leakage_voltage_scale * leakage_temperature_scale</Expression>
+        </StaticPower>
+      </State>
+      <State name="LIGHT_SLEEP" when="power_mode == LIGHT_SLEEP" units="mW">
+        <StaticPower value="0.0065" units="mW" source="VDD" sink="VSS">
+          <Expression>0.0065 * leakage_voltage_scale * leakage_temperature_scale</Expression>
+        </StaticPower>
+      </State>
+      <State name="DEEP_SLEEP" when="power_mode == DEEP_SLEEP" units="mW">
+        <StaticPower value="0.00035" units="mW" source="VDD" sink="VSS">
+          <Expression>0.00035 * leakage_voltage_scale * leakage_temperature_scale</Expression>
+        </StaticPower>
+      </State>
+      <State name="WAKE" when="power_mode == WAKE" units="mW">
+        <StaticPower value="0.018" units="mW" source="VDD" sink="VSS">
+          <Expression>0.018 * leakage_voltage_scale * leakage_temperature_scale</Expression>
+        </StaticPower>
+      </State>
+    </States>
+  </Cell>
+</Library>

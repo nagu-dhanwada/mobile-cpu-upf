@@ -100,7 +100,42 @@ class WorkloadGenerationTest(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("exceeding max_instructions", result.stderr)
 
+    def test_generation_rejects_expected_name_mismatch(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            spec = tmp_path / "renamed.json"
+            spec.write_text(
+                json.dumps(
+                    {
+                        "name": "inside_name",
+                        "intent": {
+                            "profile": "mixed_mobile",
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "tools" / "gen_workload.py"),
+                    "--spec",
+                    str(spec),
+                    "--out",
+                    str(tmp_path / "out"),
+                    "--manifest-dir",
+                    str(tmp_path / "manifest"),
+                    "--expected-name",
+                    "outside_name",
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("does not match GEN_WORKLOAD", result.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()
-

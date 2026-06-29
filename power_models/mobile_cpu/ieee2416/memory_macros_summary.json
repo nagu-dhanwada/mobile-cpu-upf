@@ -1,0 +1,22 @@
+{
+  "name": "mobile_cpu_memory_macros_ieee2416",
+  "source": "mobile_cpu_memory_macros",
+  "xml": "power_models/mobile_cpu/ieee2416/mobile_cpu_memory_macros.xml",
+  "reference_voltage_v": 1.1,
+  "macros": [
+    {
+      "block": "instr_rom",
+      "domain": "PD_CPU",
+      "area_um2": 145.0,
+      "leakage_mw": 0.0032,
+      "events": "instruction_fetch"
+    },
+    {
+      "block": "data_sram",
+      "domain": "PD_MEM",
+      "area_um2": 1800.0,
+      "leakage_mw": 0.018,
+      "events": "read,write"
+    }
+  ]
+}

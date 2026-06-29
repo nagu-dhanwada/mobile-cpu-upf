@@ -10,13 +10,17 @@ import json
 import sys
 from pathlib import Path
 
+if __package__ in {None, ""}:
+    REPO_ROOT = Path(__file__).resolve().parents[1]
+    sys.path.insert(0, str(REPO_ROOT))
+
 from estimate_power_2416 import (
     apply_scheme_profile,
     estimate,
-    load_models,
     normalize_activity_time,
     xml_escape,
 )
+from tools.ieee2416.estimate import load_library_models
 from vcd_activity_2416 import VcdActivityExtractor
 
 
@@ -345,9 +349,9 @@ def write_reports(out_dir: Path, rows: list[dict], results: list[dict], metadata
 def explore(args: argparse.Namespace) -> None:
     base_tech = json.loads(args.tech.read_text(encoding="utf-8"))
     opp_set = load_opps(args.opps)
-    models = load_models(args.models)
+    models = load_library_models(args.model)
     if not models:
-        print(f"No XML power models found in {args.models}", file=sys.stderr)
+        print(f"No OpenLowPower IEEE 2416 cells found in {args.model}", file=sys.stderr)
         raise SystemExit(2)
 
     if args.activity:
@@ -386,13 +390,13 @@ def explore(args: argparse.Namespace) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--models", type=Path, default=Path("power_models/mobile_cpu/legacy2416/rtl"))
+    parser.add_argument("--model", type=Path, default=Path("power_models/mobile_cpu/ieee2416/mobile_cpu_library.xml"))
     parser.add_argument("--tech", type=Path, default=Path("configs/tech/generic_7nm.json"))
     parser.add_argument("--opps", type=Path, default=Path("configs/dvfs/mobile_cpu_opps.json"))
     parser.add_argument("--vcd", type=Path)
     parser.add_argument("--activity", type=Path)
     parser.add_argument("--scheme", default="dvfs_retention_domains")
-    parser.add_argument("--out", type=Path, default=Path("reports/legacy2416/dvfs"))
+    parser.add_argument("--out", type=Path, default=Path("reports/2416/dvfs"))
     args = parser.parse_args()
     try:
         explore(args)

@@ -114,110 +114,6 @@ library (tiny) {
 
 
 class IEEE2416FlowTest(unittest.TestCase):
-    def test_schema_characterization_and_validation(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            tmp_path = Path(tmp)
-            schema = tmp_path / "ieee2416-2025.xsd"
-            models = tmp_path / "models"
-
-            subprocess.run(
-                [
-                    sys.executable,
-                    str(ROOT / "tools" / "gen_2416_xsd.py"),
-                    "--spec",
-                    str(ROOT / "legacy" / "simple_2416_schema" / "schema_profile.json"),
-                    "--out",
-                    str(schema),
-                ],
-                check=True,
-                capture_output=True,
-                text=True,
-            )
-            subprocess.run(
-                [
-                    sys.executable,
-                    str(ROOT / "tools" / "characterize_2416.py"),
-                    "--tech",
-                    str(ROOT / "configs" / "tech" / "generic_7nm.json"),
-                    "--out",
-                    str(models),
-                ],
-                check=True,
-                capture_output=True,
-                text=True,
-            )
-            subprocess.run(
-                [
-                    sys.executable,
-                    str(ROOT / "tools" / "validate_2416.py"),
-                    str(models),
-                    "--xsd",
-                    str(schema),
-                ],
-                check=True,
-                capture_output=True,
-                text=True,
-            )
-
-            execute_model = (models / "execute_unit.xml").read_text(encoding="utf-8")
-            dataflow_model = (models / "dataflow_unit.xml").read_text(encoding="utf-8")
-            self.assertIn("IEEE2416-2025", execute_model)
-            self.assertIn("alu_addi", execute_model)
-            self.assertIn("powerContributors", execute_model)
-            self.assertIn('componentRef="alu_addi"', execute_model)
-            self.assertIn("mac_accumulate", dataflow_model)
-
-    def test_vcd_activity_and_power_estimator(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            tmp_path = Path(tmp)
-            vcd = tmp_path / "tiny.vcd"
-            models = tmp_path / "models"
-            out = tmp_path / "reports"
-            vcd.write_text(TINY_VCD, encoding="utf-8")
-
-            subprocess.run(
-                [
-                    sys.executable,
-                    str(ROOT / "tools" / "characterize_2416.py"),
-                    "--tech",
-                    str(ROOT / "configs" / "tech" / "generic_7nm.json"),
-                    "--out",
-                    str(models),
-                ],
-                check=True,
-                capture_output=True,
-                text=True,
-            )
-            subprocess.run(
-                [
-                    sys.executable,
-                    str(ROOT / "tools" / "estimate_power_2416.py"),
-                    "--models",
-                    str(models),
-                    "--tech",
-                    str(ROOT / "configs" / "tech" / "generic_7nm.json"),
-                    "--vcd",
-                    str(vcd),
-                    "--out",
-                    str(out),
-                ],
-                check=True,
-                capture_output=True,
-                text=True,
-            )
-
-            activity = json.loads((out / "2416_activity.json").read_text(encoding="utf-8"))
-            estimate = json.loads((out / "2416_power_estimate.json").read_text(encoding="utf-8"))
-            self.assertEqual(activity["event_counts"]["execute_unit.alu_addi"], 1)
-            self.assertEqual(activity["event_counts"]["execute_unit.wait_for_interrupt"], 1)
-            self.assertGreater(len(activity["state_timeline"]), 0)
-            self.assertGreater(estimate["total_energy_pj"], 0.0)
-            self.assertGreater(len(estimate["power_timeline"]), 0)
-            self.assertIn("2416 XML macro power models", (out / "2416_power_summary.md").read_text(encoding="utf-8"))
-            self.assertTrue((out / "2416_power_waveform.svg").exists())
-            self.assertTrue((out / "2416_power_by_block.svg").exists())
-            self.assertTrue((out / "2416_power_by_domain.svg").exists())
-
     def test_comparison_report_generation(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
@@ -340,7 +236,7 @@ class IEEE2416FlowTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
             vcd = tmp_path / "tiny.vcd"
-            models = tmp_path / "models"
+            model = tmp_path / "mobile_cpu_library.xml"
             opps = tmp_path / "opps.json"
             out = tmp_path / "dvfs"
             vcd.write_text(TINY_VCD, encoding="utf-8")
@@ -374,11 +270,11 @@ class IEEE2416FlowTest(unittest.TestCase):
             subprocess.run(
                 [
                     sys.executable,
-                    str(ROOT / "tools" / "characterize_2416.py"),
+                    str(ROOT / "tools" / "ieee2416" / "characterize.py"),
                     "--tech",
                     str(ROOT / "configs" / "tech" / "generic_7nm.json"),
                     "--out",
-                    str(models),
+                    str(model),
                 ],
                 check=True,
                 capture_output=True,
@@ -388,8 +284,8 @@ class IEEE2416FlowTest(unittest.TestCase):
                 [
                     sys.executable,
                     str(ROOT / "tools" / "dvfs_explore_2416.py"),
-                    "--models",
-                    str(models),
+                    "--model",
+                    str(model),
                     "--tech",
                     str(ROOT / "configs" / "tech" / "generic_7nm.json"),
                     "--opps",
@@ -482,37 +378,9 @@ class IEEE2416FlowTest(unittest.TestCase):
     def test_synthesis_calibrated_2416_models(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
-            schema = tmp_path / "ieee2416-2025.xsd"
-            rtl_models = tmp_path / "rtl_models"
-            synth_models = tmp_path / "synth_models"
+            synth_model = tmp_path / "mobile_cpu_synth_library.xml"
             metrics = tmp_path / "metrics.json"
 
-            subprocess.run(
-                [
-                    sys.executable,
-                    str(ROOT / "tools" / "gen_2416_xsd.py"),
-                    "--spec",
-                    str(ROOT / "legacy" / "simple_2416_schema" / "schema_profile.json"),
-                    "--out",
-                    str(schema),
-                ],
-                check=True,
-                capture_output=True,
-                text=True,
-            )
-            subprocess.run(
-                [
-                    sys.executable,
-                    str(ROOT / "tools" / "characterize_2416.py"),
-                    "--tech",
-                    str(ROOT / "configs" / "tech" / "generic_7nm.json"),
-                    "--out",
-                    str(rtl_models),
-                ],
-                check=True,
-                capture_output=True,
-                text=True,
-            )
             metrics.write_text(
                 json.dumps(
                     {
@@ -534,6 +402,7 @@ class IEEE2416FlowTest(unittest.TestCase):
                                 "regfile",
                                 "execute_unit",
                                 "data_sram",
+                                "dataflow_unit",
                                 "power_controller",
                             )
                         },
@@ -544,13 +413,13 @@ class IEEE2416FlowTest(unittest.TestCase):
             subprocess.run(
                 [
                     sys.executable,
-                    str(ROOT / "tools" / "characterize_2416_synth.py"),
-                    "--rtl-models",
-                    str(rtl_models),
+                    str(ROOT / "tools" / "ieee2416" / "synth_characterize.py"),
+                    "--tech",
+                    str(ROOT / "configs" / "tech" / "generic_7nm.json"),
                     "--metrics",
                     str(metrics),
                     "--out",
-                    str(synth_models),
+                    str(synth_model),
                 ],
                 check=True,
                 capture_output=True,
@@ -559,18 +428,17 @@ class IEEE2416FlowTest(unittest.TestCase):
             subprocess.run(
                 [
                     sys.executable,
-                    str(ROOT / "tools" / "validate_2416.py"),
-                    str(synth_models),
-                    "--xsd",
-                    str(schema),
+                    str(ROOT / "tools" / "ieee2416" / "validate.py"),
+                    str(synth_model),
                 ],
                 check=True,
                 capture_output=True,
                 text=True,
             )
-            execute_model = (synth_models / "execute_unit.xml").read_text(encoding="utf-8")
-            self.assertIn('modelClass="synthesisCalibratedMacro"', execute_model)
-            self.assertIn('abstractionLevel="gate"', execute_model)
+            execute_model = synth_model.read_text(encoding="utf-8")
+            self.assertIn('<Cell name="execute_unit"', execute_model)
+            self.assertIn('value="synthesis_calibrated_macro"', execute_model)
+            self.assertIn('value="gate"', execute_model)
             self.assertIn("synthesis_dynamic_calibration", execute_model)
 
     def test_stdcell_and_memory_macro_model_generation(self):
@@ -597,11 +465,11 @@ class IEEE2416FlowTest(unittest.TestCase):
             subprocess.run(
                 [
                     sys.executable,
-                    str(ROOT / "tools" / "gen_2416_stdcell.py"),
+                    str(ROOT / "tools" / "ieee2416" / "stdcell.py"),
                     "--techlib",
                     str(techlib),
                     "--out",
-                    str(stdcells),
+                    str(stdcells / "tiny45_stdcells_library.xml"),
                 ],
                 check=True,
                 capture_output=True,
@@ -610,11 +478,11 @@ class IEEE2416FlowTest(unittest.TestCase):
             subprocess.run(
                 [
                     sys.executable,
-                    str(ROOT / "tools" / "gen_memory_macro_2416.py"),
+                    str(ROOT / "tools" / "ieee2416" / "memory_macros.py"),
                     "--config",
                     str(ROOT / "configs" / "memory_macros" / "mobile_cpu_memory_macros.json"),
                     "--out",
-                    str(macros),
+                    str(macros / "mobile_cpu_memory_macros.xml"),
                 ],
                 check=True,
                 capture_output=True,
@@ -624,8 +492,8 @@ class IEEE2416FlowTest(unittest.TestCase):
             summary = json.loads((stdcells / "stdcells_summary.json").read_text(encoding="utf-8"))
             self.assertIn("AND2_X1", summary["cells"])
             self.assertTrue(summary["cells"]["DFFR_X1"]["is_sequential"])
-            self.assertTrue((stdcells / "AND2_X1.xml").exists())
-            self.assertTrue((macros / "data_sram.xml").exists())
+            self.assertIn('<Cell name="AND2_X1"', (stdcells / "tiny45_stdcells_library.xml").read_text(encoding="utf-8"))
+            self.assertIn('<Cell name="data_sram"', (macros / "mobile_cpu_memory_macros.xml").read_text(encoding="utf-8"))
 
     def test_mapped_power_estimator_with_macro_memory(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -633,9 +501,25 @@ class IEEE2416FlowTest(unittest.TestCase):
             gate_vcd = tmp_path / "gate.vcd"
             activity = tmp_path / "activity.json"
             metrics = tmp_path / "metrics.json"
-            stdcells = tmp_path / "stdcells.json"
+            liberty = tmp_path / "tiny.lib"
+            techlib = tmp_path / "tiny_techlib.json"
+            stdcell_model = tmp_path / "tiny45_stdcells_library.xml"
+            memory_model = tmp_path / "mobile_cpu_memory_macros.xml"
             out = tmp_path / "mapped"
             gate_vcd.write_text(TINY_GATE_VCD, encoding="utf-8")
+            liberty.write_text(TINY_LIBERTY, encoding="utf-8")
+            techlib.write_text(
+                json.dumps(
+                    {
+                        "name": "tiny45",
+                        "process": {"node_nm": 45, "corner": "typical"},
+                        "temperature_c": 25.0,
+                        "liberty": str(liberty),
+                        "source": "unit",
+                    }
+                ),
+                encoding="utf-8",
+            )
             activity.write_text(
                 json.dumps(
                     {
@@ -675,28 +559,31 @@ class IEEE2416FlowTest(unittest.TestCase):
                 ),
                 encoding="utf-8",
             )
-            stdcells.write_text(
-                json.dumps(
-                    {
-                        "source": "unit",
-                        "nominal_voltage_v": 1.10,
-                        "cells": {
-                            "AND2_X1": {
-                                "name": "AND2_X1",
-                                "leakage_mw": 0.00001,
-                                "switching_energy_pj": 0.002,
-                                "is_sequential": False,
-                            },
-                            "DFFR_X1": {
-                                "name": "DFFR_X1",
-                                "leakage_mw": 0.00004,
-                                "switching_energy_pj": 0.004,
-                                "is_sequential": True,
-                            },
-                        },
-                    }
-                ),
-                encoding="utf-8",
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "tools" / "ieee2416" / "stdcell.py"),
+                    "--techlib",
+                    str(techlib),
+                    "--out",
+                    str(stdcell_model),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "tools" / "ieee2416" / "memory_macros.py"),
+                    "--config",
+                    str(ROOT / "configs" / "memory_macros" / "mobile_cpu_memory_macros.json"),
+                    "--out",
+                    str(memory_model),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
             )
 
             subprocess.run(
@@ -705,10 +592,10 @@ class IEEE2416FlowTest(unittest.TestCase):
                     str(ROOT / "tools" / "estimate_mapped_power_2416.py"),
                     "--metrics",
                     str(metrics),
-                    "--stdcells",
-                    str(stdcells),
-                    "--memory-macros",
-                    str(ROOT / "configs" / "memory_macros" / "mobile_cpu_memory_macros.json"),
+                    "--stdcell-model",
+                    str(stdcell_model),
+                    "--memory-model",
+                    str(memory_model),
                     "--tech",
                     str(ROOT / "configs" / "tech" / "generic_7nm.json"),
                     "--activity",

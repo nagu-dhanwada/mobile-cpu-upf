@@ -662,11 +662,11 @@ def write_reports(result: dict, out_dir: Path) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--models", type=Path, default=Path("power_models/mobile_cpu/legacy2416/rtl"))
+    parser.add_argument("--models", type=Path, default=Path("power_models/mobile_cpu/ieee2416/compact_rtl"))
     parser.add_argument("--tech", type=Path, default=Path("configs/tech/generic_7nm.json"))
     parser.add_argument("--vcd", type=Path)
     parser.add_argument("--activity", type=Path)
-    parser.add_argument("--out", type=Path, default=Path("reports/legacy2416"))
+    parser.add_argument("--out", type=Path, default=Path("reports/2416_compact"))
     parser.add_argument("--scheme", default="dvfs_retention_domains")
     args = parser.parse_args()
 

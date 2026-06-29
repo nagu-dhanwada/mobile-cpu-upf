@@ -1,0 +1,13 @@
+{
+  "library": "mobile_cpu_memory_macros_ieee2416",
+  "version": "0.1.0",
+  "format": "OpenLowPower IEEE 2416 Library",
+  "model_class": "memory_macro",
+  "config": "configs/memory_macros/mobile_cpu_memory_macros.json",
+  "xml": "power_models/mobile_cpu/ieee2416/mobile_cpu_memory_macros.xml",
+  "cells": [
+    "instr_rom",
+    "data_sram"
+  ],
+  "cell_count": 2
+}

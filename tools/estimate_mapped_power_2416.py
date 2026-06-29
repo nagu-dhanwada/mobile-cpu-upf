@@ -6,8 +6,13 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import sys
 from collections import defaultdict
 from pathlib import Path
+
+if __package__ in {None, ""}:
+    REPO_ROOT = Path(__file__).resolve().parents[1]
+    sys.path.insert(0, str(REPO_ROOT))
 
 from estimate_power_2416 import (
     DOMAIN_COLORS,
@@ -19,6 +24,8 @@ from estimate_power_2416 import (
     voltage_scale,
     xml_escape,
 )
+from tools.ieee2416.estimate import load_library_models
+from tools.estimate_power_2416 import PowerModel
 from vcd_activity_2416 import VcdActivityExtractor, hamming, parse_timescale_ps
 
 
@@ -178,29 +185,39 @@ def cell_count_for_block(block_metrics: dict, cell_lib: dict) -> tuple[int, int,
         switching_sum += count * float(cell["switching_energy_pj"])
         if cell.get("is_sequential"):
             sequential += count
-            clock_sum += count * max(float(cell["switching_energy_pj"]) * 0.35, 0.000001)
+            clock_sum += count * float(cell.get("clock_energy_pj", max(float(cell["switching_energy_pj"]) * 0.35, 0.000001)))
     avg_switching = switching_sum / total if total else 0.0
     return total, sequential, leakage_mw, avg_switching, clock_sum
 
 
-def memory_macro_energy(macro: dict, activity: dict, tech: dict, reference_v: float) -> dict:
-    domain = macro["powerDomain"]
-    leakage_pj = leakage_energy(float(macro["leakage_mw"]), domain, activity, tech, reference_v)
+def model_leakage_energy(model: PowerModel, activity: dict, tech: dict) -> float:
+    total = 0.0
+    for state, duration_ps in activity.get("state_durations_ps", {}).items():
+        leakage_mw = model.leakage_mw_by_state.get(state, model.leakage_mw_by_state.get("RUN", 0.0))
+        voltage = domain_voltage(tech, model.domain, 1, state=state)
+        scale = voltage_scale(voltage, model.reference_voltage_v, model.leakage_voltage_exponent)
+        total += leakage_mw * scale * (float(duration_ps) / 1000.0)
+    return total
+
+
+def memory_macro_energy(model: PowerModel, activity: dict, tech: dict) -> dict:
+    domain = model.domain
+    leakage_pj = model_leakage_energy(model, activity, tech)
     event_pj = 0.0
     event_counts: dict[str, int] = {}
-    dyn_scale = weighted_dynamic_scale(activity, tech, domain, reference_v)
-    for event_name, event in macro["events"].items():
-        key = f"{macro['block']}.{event_name}"
+    dyn_scale = weighted_dynamic_scale(activity, tech, domain, model.reference_voltage_v)
+    for event_name, event_energy_pj in model.event_pj.items():
+        key = f"{model.block}.{event_name}"
         count = sum(int(value) for value in activity.get("event_counts_by_dvfs", {}).get(key, {}).values())
         event_counts[event_name] = count
-        event_pj += count * float(event["energy_pj"]) * dyn_scale
+        event_pj += count * float(event_energy_pj) * dyn_scale
     clock_pj = 0.0
-    if macro["clock"] != "none":
-        cycles = sum(int(value) for value in activity.get("clock_cycles_by_dvfs", {}).get(macro["clock"], {}).values())
-        clock_pj = cycles * 0.010 * dyn_scale
+    if model.clock != "none":
+        cycles = sum(int(value) for value in activity.get("clock_cycles_by_dvfs", {}).get(model.clock, {}).values())
+        clock_pj = cycles * model.clock_pj * dyn_scale
     return {
-        "block": macro["block"],
-        "module": macro["module"],
+        "block": model.block,
+        "module": model.module,
         "domain": domain,
         "kind": "memory_macro",
         "cell_count": 1,
@@ -215,7 +232,7 @@ def memory_macro_energy(macro: dict, activity: dict, tech: dict, reference_v: fl
     }
 
 
-def estimate(metrics: dict, cell_lib: dict, macros: dict, gate_activity: dict, activity: dict, tech: dict) -> dict:
+def estimate(metrics: dict, cell_lib: dict, macros: dict[str, PowerModel], gate_activity: dict, activity: dict, tech: dict) -> dict:
     reference_v = float(cell_lib.get("nominal_voltage_v", 1.0))
     duration_ns = float(activity.get("duration_ps", 0.0)) / 1000.0
     blocks: list[dict] = []
@@ -254,7 +271,7 @@ def estimate(metrics: dict, cell_lib: dict, macros: dict, gate_activity: dict, a
         )
 
     for macro in macros.values():
-        blocks.append(memory_macro_energy(macro, activity, tech, reference_v))
+        blocks.append(memory_macro_energy(macro, activity, tech))
 
     for block_row in blocks:
         block_row["average_mw"] = block_row["total_pj"] / duration_ns if duration_ns > 0 else 0.0
@@ -282,9 +299,51 @@ def estimate(metrics: dict, cell_lib: dict, macros: dict, gate_activity: dict, a
         ],
         "activity": activity,
         "gate_activity": gate_activity,
+        "model_format": "OpenLowPower IEEE 2416 Library",
+        "stdcell_model_source": cell_lib.get("model_source", ""),
+        "memory_model_source": next((model.rtl_path for model in macros.values()), ""),
     }
     result["power_timeline"] = build_timeline(result, activity)
     return result
+
+
+def stdcell_library_from_openlowpower(path: Path) -> dict:
+    models = load_library_models(path)
+    cells = {}
+    nominal_voltage = 1.0
+    for model in models:
+        nominal_voltage = model.reference_voltage_v or nominal_voltage
+        cells[model.block] = {
+            "name": model.block,
+            "leakage_mw": model.leakage_mw_by_state.get("RUN", 0.0),
+            "switching_energy_pj": model.event_pj.get("cell_transition", model.toggle_pj),
+            "clock_energy_pj": model.clock_pj,
+            "is_sequential": model.clock != "none",
+        }
+    return {
+        "source": str(path),
+        "model_source": str(path),
+        "nominal_voltage_v": nominal_voltage,
+        "cells": cells,
+    }
+
+
+def stdcell_library_from_summary(path: Path) -> dict:
+    cell_lib = json.loads(path.read_text(encoding="utf-8"))
+    cell_lib["model_source"] = str(path)
+    return cell_lib
+
+
+def load_stdcell_library(args: argparse.Namespace) -> dict:
+    if args.stdcell_model:
+        return stdcell_library_from_openlowpower(args.stdcell_model)
+    if args.stdcells:
+        return stdcell_library_from_summary(args.stdcells)
+    raise SystemExit("Either --stdcell-model or --stdcells is required")
+
+
+def load_memory_models(path: Path) -> dict[str, PowerModel]:
+    return {model.block: model for model in load_library_models(path)}
 
 
 def domain_active(domain: str, state: str) -> bool:
@@ -497,21 +556,21 @@ def write_reports(result: dict, out_dir: Path) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--metrics", type=Path, required=True)
-    parser.add_argument("--stdcells", type=Path, required=True)
-    parser.add_argument("--memory-macros", type=Path, default=Path("configs/memory_macros/mobile_cpu_memory_macros.json"))
+    parser.add_argument("--stdcell-model", type=Path, default=Path("power_models/stdcells/nangate45/nangate45_stdcells_library.xml"))
+    parser.add_argument("--stdcells", type=Path, help=argparse.SUPPRESS)
+    parser.add_argument("--memory-model", type=Path, default=Path("power_models/mobile_cpu/ieee2416/mobile_cpu_memory_macros.xml"))
     parser.add_argument("--tech", type=Path, default=Path("configs/tech/generic_7nm.json"))
     parser.add_argument("--gate-vcd", type=Path, required=True)
     parser.add_argument("--rtl-vcd", type=Path)
     parser.add_argument("--activity", type=Path)
     parser.add_argument("--scheme", default="dvfs_retention_domains")
-    parser.add_argument("--out", type=Path, default=Path("reports/legacy2416_mapped"))
+    parser.add_argument("--out", type=Path, default=Path("reports/2416_mapped"))
     args = parser.parse_args()
 
     tech = json.loads(args.tech.read_text(encoding="utf-8"))
     metrics = json.loads(args.metrics.read_text(encoding="utf-8"))
-    cell_lib = json.loads(args.stdcells.read_text(encoding="utf-8"))
-    macro_config = json.loads(args.memory_macros.read_text(encoding="utf-8"))
-    macros = {macro["block"]: macro for macro in macro_config["macros"]}
+    cell_lib = load_stdcell_library(args)
+    macros = load_memory_models(args.memory_model)
     activity = load_activity(args, tech)
     gate_activity = parse_gate_vcd_toggles(args.gate_vcd)
     result = estimate(metrics, cell_lib, macros, gate_activity, activity, tech)

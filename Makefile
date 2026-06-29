@@ -26,10 +26,6 @@ POWER_SIM_SRC_LINK ?= /private/tmp/mobile_cpu_upf_src
 JOULES_DIR ?= build/joules
 TECH ?= generic_7nm
 TECH_CONFIG ?= configs/tech/$(TECH).json
-LEGACY_2416_SPEC ?= legacy/simple_2416_schema/schema_profile.json
-LEGACY_2416_SCHEMA ?= legacy/simple_2416_schema/generated_schema.xsd
-LEGACY_2416_MODEL_DIR ?= power_models/mobile_cpu/legacy2416/rtl
-LEGACY_2416_REPORT_DIR ?= reports/legacy2416/$(WORKLOAD)_$(TECH)
 OPENLOWPOWER_2416_XSD ?= $(HOME)/Downloads/2416.xsd
 OPENLOWPOWER_2416_MODEL ?= power_models/mobile_cpu/ieee2416/mobile_cpu_library.xml
 OPENLOWPOWER_2416_REPORT_DIR ?= reports/2416/$(WORKLOAD)_$(TECH)_$(SCHEME)
@@ -37,13 +33,13 @@ IEEE2416_WORKLOADS ?= alu_idle compute_burst memory_burst cpu_mac dataflow_mac
 IEEE2416_SCHEMES ?= baseline_always_on clock_gated_idle core_power_gated_sleep dvfs_retention_domains
 EFFICIENCY_WORKLOADS ?= cpu_mac dataflow_mac
 DVFS_OPPS ?= configs/dvfs/mobile_cpu_opps.json
-LEGACY_DVFS_REPORT_DIR ?= reports/legacy2416/dvfs/$(WORKLOAD)_$(TECH)_$(SCHEME)
+OPENLOWPOWER_DVFS_REPORT_DIR ?= reports/2416/dvfs/$(WORKLOAD)_$(TECH)_$(SCHEME)
 SYNTH_DIR ?= build/synth/$(WORKLOAD)
 SYNTH_NETLIST ?= $(SYNTH_DIR)/mobile_cpu_gate.v
 SYNTH_JSON ?= $(SYNTH_DIR)/mobile_cpu_synth.json
 SYNTH_METRICS ?= $(SYNTH_DIR)/mobile_cpu_synth_metrics.json
-LEGACY_SYNTH_MODEL_DIR ?= power_models/mobile_cpu/legacy2416/synth
-LEGACY_SYNTH_2416_REPORT_DIR ?= reports/legacy2416_synth/$(WORKLOAD)_$(TECH)
+OPENLOWPOWER_SYNTH_2416_MODEL ?= power_models/mobile_cpu/ieee2416/mobile_cpu_synth_library.xml
+OPENLOWPOWER_SYNTH_2416_REPORT_DIR ?= reports/2416_synth/$(WORKLOAD)_$(TECH)_$(SCHEME)
 GLS_OBJ ?= /private/tmp/mobile_cpu_upf_gls_obj
 TECHLIB ?= nangate45
 TECHLIB_CONFIG ?= configs/techlibs/$(TECHLIB).json
@@ -51,15 +47,16 @@ TECHLIB_LIBERTY ?= third_party/nangate45/NangateOpenCellLibrary_typical.lib
 TECHLIB_STDCELL_SIM ?= build/techlibs/$(TECHLIB)/NangateOpenCellLibrary.functional.v
 STDCELL_MODEL_DIR ?= power_models/stdcells/$(TECHLIB)
 STDCELL_SUMMARY ?= $(STDCELL_MODEL_DIR)/stdcells_summary.json
+STDCELL_2416_MODEL ?= $(STDCELL_MODEL_DIR)/$(TECHLIB)_stdcells_library.xml
 MEMORY_MACRO_CONFIG ?= configs/memory_macros/mobile_cpu_memory_macros.json
-MEMORY_MACRO_MODEL_DIR ?= power_models/mobile_cpu/legacy2416/macros
+MEMORY_MACRO_2416_MODEL ?= power_models/mobile_cpu/ieee2416/mobile_cpu_memory_macros.xml
 MAPPED_DIR ?= build/mapped/$(TECHLIB)/$(WORKLOAD)
 MAPPED_NETLIST ?= $(MAPPED_DIR)/mobile_cpu_mapped.v
 MAPPED_JSON ?= $(MAPPED_DIR)/mobile_cpu_mapped.json
 MAPPED_METRICS ?= $(MAPPED_DIR)/mobile_cpu_mapped_metrics.json
 MAPPED_GLS_OBJ ?= /private/tmp/mobile_cpu_upf_mapped_gls_obj
-LEGACY_MAPPED_2416_REPORT_DIR ?= reports/legacy2416_mapped/$(TECHLIB)/$(WORKLOAD)_$(TECH)
-LEGACY_ABSTRACTION_COMPARE_DIR ?= reports/legacy2416_compare/$(WORKLOAD)_$(TECH)_$(TECHLIB)
+OPENLOWPOWER_MAPPED_2416_REPORT_DIR ?= reports/2416_mapped/$(TECHLIB)/$(WORKLOAD)_$(TECH)_$(SCHEME)
+OPENLOWPOWER_ABSTRACTION_COMPARE_DIR ?= reports/2416_compare/$(WORKLOAD)_$(TECH)_$(SCHEME)_$(TECHLIB)
 VISUAL_STORY_WORKLOADS ?= cpu_mac dataflow_mac
 VISUAL_STORY_GENERATED ?= dataflow_energy_probe sleep_wake_probe
 VISUAL_STORY_CASES ?= cpu_mac dataflow_mac generated/dataflow_energy_probe generated/sleep_wake_probe
@@ -81,7 +78,7 @@ RTL_FILES := \
 VERILATOR_WARNINGS := -Wno-UNUSEDSIGNAL -Wno-COMBDLY
 VERILATOR_GLS_WARNINGS := $(VERILATOR_WARNINGS) -Wno-DECLFILENAME -Wno-LATCH -Wno-UNOPTFLAT
 
-.PHONY: upf explore test lint-rtl gen-workload assemble-generated sim-generated sim-generated-vcd profile-generated assemble-workload sim-power sim-power-vcd sim-workload sim-workload-vcd synth gls synth-mapped gls-mapped techlib-nangate45 joules-script joules-input joules-workload 2416-characterize 2416-validate 2416-power 2416-compare-workloads 2416-compare-schemes 2416-dvfs-explore 2416-synth-characterize 2416-synth-validate 2416-synth-power 2416-stdcell-models 2416-stdcell-validate 2416-memory-macros 2416-memory-macro-validate 2416-mapped-power 2416-compare-abstractions p2416-characterize p2416-validate p2416-power legacy2416-schema legacy2416-characterize legacy2416-validate legacy2416-activity legacy2416-power legacy2416-compare-workloads legacy2416-compare-schemes legacy2416-dvfs-explore legacy2416-synth-characterize legacy2416-synth-validate legacy2416-synth-power legacy2416-stdcell-models legacy2416-stdcell-validate legacy2416-memory-macros legacy2416-memory-macro-validate legacy2416-mapped-power legacy2416-compare-abstractions profile-workload compare-dataflow visual-story-data visual-story open-visual-story waves waves-workload clean
+.PHONY: upf explore test lint-rtl gen-workload assemble-generated sim-generated sim-generated-vcd profile-generated assemble-workload sim-power sim-power-vcd sim-workload sim-workload-vcd synth gls synth-mapped gls-mapped techlib-nangate45 joules-script joules-input joules-workload 2416-characterize 2416-validate 2416-power 2416-compare-workloads 2416-compare-schemes 2416-dvfs-explore 2416-synth-characterize 2416-synth-validate 2416-synth-power 2416-stdcell-models 2416-stdcell-validate 2416-memory-macros 2416-memory-macro-validate 2416-mapped-power 2416-compare-abstractions p2416-characterize p2416-validate p2416-power profile-workload compare-dataflow visual-story-data visual-story open-visual-story waves waves-workload clean
 
 upf:
 	$(PYTHON) tools/gen_upf.py --schemes power_schemes --out upf
@@ -103,7 +100,8 @@ gen-workload:
 	$(PYTHON) tools/gen_workload.py \
 		--spec $(GEN_WORKLOAD_SPEC) \
 		--out $(GEN_WORKLOAD_OUT) \
-		--manifest-dir $(GEN_WORKLOAD_MANIFEST_DIR)
+		--manifest-dir $(GEN_WORKLOAD_MANIFEST_DIR) \
+		--expected-name $(GEN_WORKLOAD)
 
 assemble-generated: gen-workload
 	$(MAKE) assemble-workload WORKLOAD=generated/$(GEN_WORKLOAD)
@@ -278,115 +276,6 @@ joules-workload: upf sim-workload-vcd
 		--upf upf/$(SCHEME).upf \
 		--out $(JOULES_DIR)/$(WORKLOAD)_run_joules_power.tcl
 
-legacy2416-schema:
-	$(PYTHON) tools/gen_2416_xsd.py --spec $(LEGACY_2416_SPEC) --out $(LEGACY_2416_SCHEMA)
-
-legacy2416-characterize: legacy2416-schema
-	$(PYTHON) tools/characterize_2416.py --tech $(TECH_CONFIG) --out $(LEGACY_2416_MODEL_DIR)
-
-legacy2416-validate: legacy2416-schema
-	$(PYTHON) tools/validate_2416.py $(LEGACY_2416_MODEL_DIR) --xsd $(LEGACY_2416_SCHEMA)
-
-legacy2416-activity: sim-workload-vcd
-	$(PYTHON) tools/vcd_activity_2416.py \
-		--vcd waves/$(WORKLOAD).vcd \
-		--out $(LEGACY_2416_REPORT_DIR)/2416_activity.json
-
-legacy2416-power: legacy2416-characterize legacy2416-validate sim-workload-vcd
-	$(PYTHON) tools/estimate_power_2416.py \
-		--models $(LEGACY_2416_MODEL_DIR) \
-		--tech $(TECH_CONFIG) \
-		--vcd waves/$(WORKLOAD).vcd \
-		--scheme $(SCHEME) \
-		--out $(LEGACY_2416_REPORT_DIR)
-
-legacy2416-compare-workloads:
-	@set -e; for workload in $(IEEE2416_WORKLOADS); do \
-		$(MAKE) legacy2416-power WORKLOAD=$$workload TECH=$(TECH) SCHEME=$(SCHEME) LEGACY_2416_REPORT_DIR=reports/legacy2416/$${workload}_$(TECH); \
-	done
-	$(PYTHON) tools/compare_2416.py \
-		--result-root reports/legacy2416 \
-		--labels $(IEEE2416_WORKLOADS) \
-		--suffix _$(TECH) \
-		--title "Legacy 2416-Style Workload Power Comparison ($(TECH), $(SCHEME))" \
-		--out reports/legacy2416/compare_workloads_$(TECH)_$(SCHEME)
-
-legacy2416-compare-schemes: legacy2416-characterize legacy2416-validate sim-workload-vcd
-	@set -e; for scheme in $(IEEE2416_SCHEMES); do \
-		$(PYTHON) tools/estimate_power_2416.py \
-			--models $(LEGACY_2416_MODEL_DIR) \
-			--tech $(TECH_CONFIG) \
-			--vcd waves/$(WORKLOAD).vcd \
-			--scheme $$scheme \
-			--out reports/legacy2416/$(WORKLOAD)_$(TECH)_$${scheme}; \
-	done
-	$(PYTHON) tools/compare_2416.py \
-		--result-root reports/legacy2416 \
-		--labels $(IEEE2416_SCHEMES) \
-		--prefix $(WORKLOAD)_$(TECH)_ \
-		--title "Legacy 2416-Style Power Scheme Comparison ($(WORKLOAD), $(TECH))" \
-		--out reports/legacy2416/compare_schemes_$(WORKLOAD)_$(TECH)
-
-legacy2416-dvfs-explore: legacy2416-characterize legacy2416-validate sim-workload-vcd
-	$(PYTHON) tools/dvfs_explore_2416.py \
-		--models $(LEGACY_2416_MODEL_DIR) \
-		--tech $(TECH_CONFIG) \
-		--opps $(DVFS_OPPS) \
-		--vcd waves/$(WORKLOAD).vcd \
-		--scheme $(SCHEME) \
-		--out $(LEGACY_DVFS_REPORT_DIR)
-
-legacy2416-synth-characterize: legacy2416-characterize synth
-	$(PYTHON) tools/characterize_2416_synth.py \
-		--rtl-models $(LEGACY_2416_MODEL_DIR) \
-		--metrics $(SYNTH_METRICS) \
-		--out $(LEGACY_SYNTH_MODEL_DIR)
-
-legacy2416-synth-validate: legacy2416-schema legacy2416-synth-characterize
-	$(PYTHON) tools/validate_2416.py $(LEGACY_SYNTH_MODEL_DIR) --xsd $(LEGACY_2416_SCHEMA)
-
-legacy2416-synth-power: legacy2416-synth-validate sim-workload-vcd
-	$(PYTHON) tools/estimate_power_2416.py \
-		--models $(LEGACY_SYNTH_MODEL_DIR) \
-		--tech $(TECH_CONFIG) \
-		--vcd waves/$(WORKLOAD).vcd \
-		--scheme $(SCHEME) \
-		--out $(LEGACY_SYNTH_2416_REPORT_DIR)
-
-legacy2416-stdcell-models: legacy2416-schema techlib-nangate45
-	$(PYTHON) tools/gen_2416_stdcell.py \
-		--techlib $(TECHLIB_CONFIG) \
-		--out $(STDCELL_MODEL_DIR)
-
-legacy2416-stdcell-validate: legacy2416-stdcell-models
-	$(PYTHON) tools/validate_2416.py $(STDCELL_MODEL_DIR) --xsd $(LEGACY_2416_SCHEMA)
-
-legacy2416-memory-macros: legacy2416-schema
-	$(PYTHON) tools/gen_memory_macro_2416.py \
-		--config $(MEMORY_MACRO_CONFIG) \
-		--out $(MEMORY_MACRO_MODEL_DIR)
-
-legacy2416-memory-macro-validate: legacy2416-memory-macros
-	$(PYTHON) tools/validate_2416.py $(MEMORY_MACRO_MODEL_DIR) --xsd $(LEGACY_2416_SCHEMA)
-
-legacy2416-mapped-power: legacy2416-stdcell-models legacy2416-memory-macros sim-workload-vcd gls-mapped
-	$(PYTHON) tools/estimate_mapped_power_2416.py \
-		--metrics $(MAPPED_METRICS) \
-		--stdcells $(STDCELL_SUMMARY) \
-		--memory-macros $(MEMORY_MACRO_CONFIG) \
-		--tech $(TECH_CONFIG) \
-		--rtl-vcd waves/$(WORKLOAD).vcd \
-		--gate-vcd waves/$(WORKLOAD)_$(TECHLIB)_mapped_gate.vcd \
-		--scheme $(SCHEME) \
-		--out $(LEGACY_MAPPED_2416_REPORT_DIR)
-
-legacy2416-compare-abstractions: legacy2416-power legacy2416-synth-power legacy2416-mapped-power
-	$(PYTHON) tools/compare_2416_abstractions.py \
-		--case rtl:$(LEGACY_2416_REPORT_DIR) \
-		--case synth:$(LEGACY_SYNTH_2416_REPORT_DIR) \
-		--case mapped:$(LEGACY_MAPPED_2416_REPORT_DIR) \
-		--out $(LEGACY_ABSTRACTION_COMPARE_DIR)
-
 2416-characterize:
 	$(PYTHON) tools/ieee2416/characterize.py \
 		--tech $(TECH_CONFIG) \
@@ -438,45 +327,71 @@ p2416-validate: 2416-validate
 
 p2416-power: 2416-power
 
-2416-dvfs-explore:
-	@echo "NOTE: DVFS exploration currently uses the legacy simple XML estimator. Prefer 'make 2416-power' for the real-XSD flow."
-	$(MAKE) legacy2416-dvfs-explore WORKLOAD=$(WORKLOAD) TECH=$(TECH) SCHEME=$(SCHEME)
+2416-dvfs-explore: 2416-validate sim-workload-vcd
+	$(PYTHON) tools/dvfs_explore_2416.py \
+		--model $(OPENLOWPOWER_2416_MODEL) \
+		--tech $(TECH_CONFIG) \
+		--opps $(DVFS_OPPS) \
+		--vcd waves/$(WORKLOAD).vcd \
+		--scheme $(SCHEME) \
+		--out $(OPENLOWPOWER_DVFS_REPORT_DIR)
 
-2416-synth-characterize:
-	@echo "NOTE: synthesis-calibrated macro modeling currently uses the legacy simple XML estimator."
-	$(MAKE) legacy2416-synth-characterize WORKLOAD=$(WORKLOAD) TECH=$(TECH)
+2416-synth-characterize: synth
+	$(PYTHON) tools/ieee2416/synth_characterize.py \
+		--tech $(TECH_CONFIG) \
+		--metrics $(SYNTH_METRICS) \
+		--out $(OPENLOWPOWER_SYNTH_2416_MODEL)
 
-2416-synth-validate:
-	@echo "NOTE: synthesis-calibrated macro validation currently uses the legacy simple XML estimator."
-	$(MAKE) legacy2416-synth-validate WORKLOAD=$(WORKLOAD) TECH=$(TECH)
+2416-synth-validate: 2416-synth-characterize
+	$(PYTHON) tools/ieee2416/validate.py \
+		$(OPENLOWPOWER_SYNTH_2416_MODEL) \
+		--xsd $(OPENLOWPOWER_2416_XSD)
 
-2416-synth-power:
-	@echo "NOTE: synthesis-calibrated macro power currently uses the legacy simple XML estimator."
-	$(MAKE) legacy2416-synth-power WORKLOAD=$(WORKLOAD) TECH=$(TECH) SCHEME=$(SCHEME)
+2416-synth-power: 2416-synth-validate sim-workload-vcd
+	$(PYTHON) tools/ieee2416/estimate.py \
+		--model $(OPENLOWPOWER_SYNTH_2416_MODEL) \
+		--tech $(TECH_CONFIG) \
+		--vcd waves/$(WORKLOAD).vcd \
+		--scheme $(SCHEME) \
+		--out $(OPENLOWPOWER_SYNTH_2416_REPORT_DIR)
 
-2416-stdcell-models:
-	@echo "NOTE: standard-cell XML generation currently uses the legacy simple XML format."
-	$(MAKE) legacy2416-stdcell-models TECHLIB=$(TECHLIB)
+2416-stdcell-models: techlib-nangate45
+	$(PYTHON) tools/ieee2416/stdcell.py \
+		--techlib $(TECHLIB_CONFIG) \
+		--out $(STDCELL_2416_MODEL)
 
-2416-stdcell-validate:
-	@echo "NOTE: standard-cell XML validation currently uses the legacy simple XML format."
-	$(MAKE) legacy2416-stdcell-validate TECHLIB=$(TECHLIB)
+2416-stdcell-validate: 2416-stdcell-models
+	$(PYTHON) tools/ieee2416/validate.py \
+		$(STDCELL_2416_MODEL) \
+		--xsd $(OPENLOWPOWER_2416_XSD)
 
 2416-memory-macros:
-	@echo "NOTE: memory macro XML generation currently uses the legacy simple XML format."
-	$(MAKE) legacy2416-memory-macros
+	$(PYTHON) tools/ieee2416/memory_macros.py \
+		--config $(MEMORY_MACRO_CONFIG) \
+		--out $(MEMORY_MACRO_2416_MODEL)
 
-2416-memory-macro-validate:
-	@echo "NOTE: memory macro XML validation currently uses the legacy simple XML format."
-	$(MAKE) legacy2416-memory-macro-validate
+2416-memory-macro-validate: 2416-memory-macros
+	$(PYTHON) tools/ieee2416/validate.py \
+		$(MEMORY_MACRO_2416_MODEL) \
+		--xsd $(OPENLOWPOWER_2416_XSD)
 
-2416-mapped-power:
-	@echo "NOTE: mapped standard-cell power currently uses the legacy simple XML estimator."
-	$(MAKE) legacy2416-mapped-power WORKLOAD=$(WORKLOAD) TECH=$(TECH) SCHEME=$(SCHEME) TECHLIB=$(TECHLIB)
+2416-mapped-power: 2416-stdcell-validate 2416-memory-macro-validate sim-workload-vcd gls-mapped
+	$(PYTHON) tools/estimate_mapped_power_2416.py \
+		--metrics $(MAPPED_METRICS) \
+		--stdcell-model $(STDCELL_2416_MODEL) \
+		--memory-model $(MEMORY_MACRO_2416_MODEL) \
+		--tech $(TECH_CONFIG) \
+		--rtl-vcd waves/$(WORKLOAD).vcd \
+		--gate-vcd waves/$(WORKLOAD)_$(TECHLIB)_mapped_gate.vcd \
+		--scheme $(SCHEME) \
+		--out $(OPENLOWPOWER_MAPPED_2416_REPORT_DIR)
 
-2416-compare-abstractions:
-	@echo "NOTE: abstraction comparison currently uses the legacy simple XML estimator for synth/mapped levels."
-	$(MAKE) legacy2416-compare-abstractions WORKLOAD=$(WORKLOAD) TECH=$(TECH) SCHEME=$(SCHEME) TECHLIB=$(TECHLIB)
+2416-compare-abstractions: 2416-power 2416-synth-power 2416-mapped-power
+	$(PYTHON) tools/compare_2416_abstractions.py \
+		--case rtl:$(OPENLOWPOWER_2416_REPORT_DIR) \
+		--case synth:$(OPENLOWPOWER_SYNTH_2416_REPORT_DIR) \
+		--case mapped:$(OPENLOWPOWER_MAPPED_2416_REPORT_DIR) \
+		--out $(OPENLOWPOWER_ABSTRACTION_COMPARE_DIR)
 
 profile-workload: 2416-power
 	$(PYTHON) tools/profile_workload.py \

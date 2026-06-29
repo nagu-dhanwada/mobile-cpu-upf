@@ -34,6 +34,10 @@ def main() -> None:
     parser.add_argument("--out", type=Path, default=Path("workloads/generated"))
     parser.add_argument("--manifest-dir", type=Path, default=Path("build/workloadgen"))
     parser.add_argument(
+        "--expected-name",
+        help="Fail if the generated workload name does not match this value.",
+    )
+    parser.add_argument(
         "--print-workload",
         action="store_true",
         help="Print the generated workload name for scripts.",
@@ -45,6 +49,13 @@ def main() -> None:
         generated = generate_workload(intent)
     except Exception as exc:
         raise SystemExit(f"{args.spec}: {exc}") from exc
+
+    if args.expected_name and generated.name != args.expected_name:
+        raise SystemExit(
+            f"{args.spec}: workload spec name {generated.name!r} does not match "
+            f"GEN_WORKLOAD={args.expected_name!r}. Update the JSON 'name' field "
+            "or call make with the matching GEN_WORKLOAD value."
+        )
 
     asm_path = args.out / f"{generated.name}.s"
     manifest_path = args.manifest_dir / generated.name / "workload_intent.json"
