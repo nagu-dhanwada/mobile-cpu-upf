@@ -87,6 +87,18 @@
       <Event name="branch_redirect" mode="RUN" style="pinTransition" when="branch_taken &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
         <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.036" />
       </Event>
+      <Event name="fetch_valid_cycle" mode="RUN" style="pinTransition" when="fetch_valid &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.00003" />
+      </Event>
+      <Event name="stall_fetch_cycle" mode="RUN" style="pinTransition" when="stall_fetch &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.00003" />
+      </Event>
+      <Event name="stall_valid_cycle" mode="RUN" style="pinTransition" when="fetch_valid &amp;&amp; stall_fetch &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.00003" />
+      </Event>
+      <Event name="fetch_ce_cycle" mode="RUN" style="pinTransition" when="fetch_ce &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.00003" />
+      </Event>
       <Event name="rtl_toggle" mode="RUN" style="pinTransition" when="vcd_activity &amp;&amp; domain_on &amp;&amp; block == fetch_unit" inputPin="activity" inputTransition="rising">
         <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.00008" />
       </Event>
@@ -164,6 +176,9 @@
     <Events>
       <Event name="instruction_fetch" mode="RUN" style="pinTransition" when="instr_addr_sample &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
         <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.2" />
+      </Event>
+      <Event name="stall_hold_cycle" mode="RUN" style="pinTransition" when="stall_fetch &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.000015" />
       </Event>
       <Event name="rtl_toggle" mode="RUN" style="pinTransition" when="vcd_activity &amp;&amp; domain_on &amp;&amp; block == instr_rom" inputPin="activity" inputTransition="rising">
         <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.00008" />
@@ -244,6 +259,18 @@
     <Events>
       <Event name="decode_instruction" mode="RUN" style="pinTransition" when="retired_instruction &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
         <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.0072" />
+      </Event>
+      <Event name="decode_valid_cycle" mode="RUN" style="pinTransition" when="decode_valid &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.00003" />
+      </Event>
+      <Event name="stall_decode_cycle" mode="RUN" style="pinTransition" when="stall_decode &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.00003" />
+      </Event>
+      <Event name="stall_valid_cycle" mode="RUN" style="pinTransition" when="decode_valid &amp;&amp; stall_decode &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.00003" />
+      </Event>
+      <Event name="decode_ce_cycle" mode="RUN" style="pinTransition" when="decode_ce &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.00003" />
       </Event>
       <Event name="rtl_toggle" mode="RUN" style="pinTransition" when="vcd_activity &amp;&amp; domain_on &amp;&amp; block == decode_unit" inputPin="activity" inputTransition="rising">
         <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.00008" />
@@ -427,6 +454,18 @@
       </Event>
       <Event name="wait_for_interrupt" mode="RUN" style="pinTransition" when="opcode.WFI &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
         <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.0024" />
+      </Event>
+      <Event name="execute_valid_cycle" mode="RUN" style="pinTransition" when="execute_valid &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.00003" />
+      </Event>
+      <Event name="stall_execute_cycle" mode="RUN" style="pinTransition" when="stall_execute &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.00003" />
+      </Event>
+      <Event name="stall_valid_cycle" mode="RUN" style="pinTransition" when="execute_valid &amp;&amp; stall_execute &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.00003" />
+      </Event>
+      <Event name="execute_ce_cycle" mode="RUN" style="pinTransition" when="execute_ce &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.00003" />
       </Event>
       <Event name="rtl_toggle" mode="RUN" style="pinTransition" when="vcd_activity &amp;&amp; domain_on &amp;&amp; block == execute_unit" inputPin="activity" inputTransition="rising">
         <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.00008" />
@@ -800,6 +839,21 @@
       </Event>
       <Event name="result_read" mode="RUN" style="pinTransition" when="mmio_read_result &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
         <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.0216" />
+      </Event>
+      <Event name="busy_cycle" mode="RUN" style="pinTransition" when="dataflow_busy &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.000045" />
+      </Event>
+      <Event name="idle_cycle" mode="RUN" style="pinTransition" when="!dataflow_busy &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.000015" />
+      </Event>
+      <Event name="mac_active_cycle" mode="RUN" style="pinTransition" when="dataflow_op_valid &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.000045" />
+      </Event>
+      <Event name="ctrl_ce_cycle" mode="RUN" style="pinTransition" when="dataflow_ctrl_ce &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.00003" />
+      </Event>
+      <Event name="mac_ce_cycle" mode="RUN" style="pinTransition" when="dataflow_mac_ce &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.00003" />
       </Event>
       <Event name="rtl_toggle" mode="RUN" style="pinTransition" when="vcd_activity &amp;&amp; domain_on &amp;&amp; block == dataflow_unit" inputPin="activity" inputTransition="rising">
         <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.00008" />

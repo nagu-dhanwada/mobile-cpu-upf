@@ -7,6 +7,23 @@
     "UPF still has one always-on domain because this scheme targets dynamic power through clock enables.",
     "The clock-gating controls are core_clk_en and mem_clk_en in u_power_controller."
   ],
+  "methodology": {
+    "gated_in_rtl": [
+      "u_power_controller drives core_clk_en and mem_clk_en.",
+      "u_core_clk_gate gates the CPU-side clock when the controller enters IDLE or LIGHT_SLEEP.",
+      "u_mem_clk_gate gates the memory-side clock when the controller enters IDLE or LIGHT_SLEEP.",
+      "The fetch PC is held during LSU stalls so load/store wait states do not repeatedly advance the front end."
+    ],
+    "estimated_behavior": [
+      "Clock-gating savings are estimated with clock_gating_efficiency and activity_by_power_state.",
+      "No CPU or memory power switches are modeled for this scheme; domains remain always-on.",
+      "Retention, isolation, and switched-supply energy are not claimed as implemented behavior for this scheme."
+    ],
+    "designer_use": [
+      "Use this scheme to study dynamic-power reduction from idle and stall clock gating before introducing switched domains.",
+      "Compare against dvfs_retention_domains when deciding whether leakage/recovery overhead justifies power gating."
+    ]
+  },
   "domains": [
     {
       "name": "PD_TOP",
@@ -32,4 +49,3 @@
     "retention_overhead_mw": 0.0
   }
 }
-

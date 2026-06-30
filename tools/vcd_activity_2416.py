@@ -302,6 +302,16 @@ class VcdActivityExtractor:
                 self._add_event("load_store_unit", "error_response")
         if bit_value(self._value(f"{DUT}.dataflow_op_valid")):
             self._add_event("dataflow_unit", "mac_accumulate")
+        if bit_value(self._value(f"{DUT}.dataflow_busy")):
+            self._add_event("dataflow_unit", "busy_cycle")
+        else:
+            self._add_event("dataflow_unit", "idle_cycle")
+        if bit_value(self._value(f"{DUT}.dataflow_op_valid")):
+            self._add_event("dataflow_unit", "mac_active_cycle")
+        if bit_value(self._value(f"{DUT}.dataflow_ctrl_ce")):
+            self._add_event("dataflow_unit", "ctrl_ce_cycle")
+        if bit_value(self._value(f"{DUT}.dataflow_mac_ce")):
+            self._add_event("dataflow_unit", "mac_ce_cycle")
 
     def _sample_core_edge(self) -> None:
         if not self._reset_released():
@@ -313,6 +323,7 @@ class VcdActivityExtractor:
         self.clock_cycles_by_dvfs["core"][self._dvfs()] += 1
         if bit_value(self._value(f"{DUT}.lsu_stall")):
             self._add_event("load_store_unit", "stall_cycle")
+        self._sample_frontend_observability()
 
         instr = int_value(self._value(f"{DUT}.instr"))
         opcode = (instr >> 12) & 0xF
@@ -341,6 +352,43 @@ class VcdActivityExtractor:
 
         if opcode == 0x8 and bit_value(self._value(f"{DUT}.branch_taken")):
             self._add_event("fetch_unit", "branch_redirect")
+
+    def _sample_frontend_observability(self) -> None:
+        fetch_valid = bit_value(self._value(f"{DUT}.fetch_valid"))
+        decode_valid = bit_value(self._value(f"{DUT}.decode_valid"))
+        execute_valid = bit_value(self._value(f"{DUT}.execute_valid"))
+        stall_fetch = bit_value(self._value(f"{DUT}.stall_fetch"))
+        stall_decode = bit_value(self._value(f"{DUT}.stall_decode"))
+        stall_execute = bit_value(self._value(f"{DUT}.stall_execute"))
+
+        if fetch_valid:
+            self._add_event("fetch_unit", "fetch_valid_cycle")
+        if decode_valid:
+            self._add_event("decode_unit", "decode_valid_cycle")
+        if execute_valid:
+            self._add_event("execute_unit", "execute_valid_cycle")
+
+        if stall_fetch:
+            self._add_event("fetch_unit", "stall_fetch_cycle")
+            self._add_event("instr_rom", "stall_hold_cycle")
+        if stall_decode:
+            self._add_event("decode_unit", "stall_decode_cycle")
+        if stall_execute:
+            self._add_event("execute_unit", "stall_execute_cycle")
+
+        if fetch_valid and stall_fetch:
+            self._add_event("fetch_unit", "stall_valid_cycle")
+        if decode_valid and stall_decode:
+            self._add_event("decode_unit", "stall_valid_cycle")
+        if execute_valid and stall_execute:
+            self._add_event("execute_unit", "stall_valid_cycle")
+
+        if bit_value(self._value(f"{DUT}.fetch_ce")):
+            self._add_event("fetch_unit", "fetch_ce_cycle")
+        if bit_value(self._value(f"{DUT}.decode_ce")):
+            self._add_event("decode_unit", "decode_ce_cycle")
+        if bit_value(self._value(f"{DUT}.execute_ce")):
+            self._add_event("execute_unit", "execute_ce_cycle")
 
     def _sample_data_bus_request(self) -> None:
         bus_addr = int_value(self._value(f"{DUT}.bus_req_addr"))

@@ -27,9 +27,28 @@ def write_case(report_root: Path, workload: str, tech: str, scheme: str, energy:
         ],
         "activity": {
             "event_counts": {
+                "data_bus_interconnect.mmio_route": 8,
                 "fetch_unit.pc_update": 6,
+                "fetch_unit.fetch_ce_cycle": 12,
+                "fetch_unit.stall_valid_cycle": 4,
+                "decode_unit.decode_ce_cycle": 12,
+                "decode_unit.stall_valid_cycle": 4,
+                "execute_unit.execute_ce_cycle": 12,
+                "execute_unit.stall_valid_cycle": 4,
+                "instr_rom.stall_hold_cycle": 4,
                 "execute_unit.alu_add": 3,
                 "dataflow_unit.mac_accumulate": 2,
+                "dataflow_unit.operand_write": 4,
+                "dataflow_unit.command_write": 2,
+                "dataflow_unit.result_read": 1,
+                "dataflow_unit.busy_cycle": 2,
+                "dataflow_unit.idle_cycle": 40,
+                "dataflow_unit.mac_active_cycle": 2,
+                "dataflow_unit.ctrl_ce_cycle": 8,
+                "dataflow_unit.mac_ce_cycle": 2,
+                "load_store_unit.request_issue": 8,
+                "load_store_unit.response_complete": 8,
+                "load_store_unit.stall_cycle": 24,
             }
         },
         "power_timeline": [
@@ -84,13 +103,17 @@ class VisualStoryTest(unittest.TestCase):
             scheme_root = tmp_path / "power_schemes"
             out = tmp_path / "visual" / "index.html"
             scheme_root.mkdir(parents=True)
-            (scheme_root / "dvfs_retention_domains.json").write_text(
+            (scheme_root / "04_dvfs_retention_domains.json").write_text(
                 json.dumps(
                     {
                         "name": "dvfs_retention_domains",
                         "description": "Fixture scheme",
                         "domains": [{"name": "PD_AON"}, {"name": "PD_CPU"}, {"name": "PD_MEM"}],
                         "power_states": [{"name": "RUN"}, {"name": "IDLE"}],
+                        "methodology": {
+                            "gated_in_rtl": ["fixture RTL behavior"],
+                            "estimated_behavior": ["fixture estimated behavior"],
+                        },
                     }
                 ),
                 encoding="utf-8",
@@ -134,11 +157,17 @@ class VisualStoryTest(unittest.TestCase):
             self.assertIn("How The CPU Moves Work", html)
             self.assertIn("timeline-cursor", html)
             self.assertIn("Workload Cards", html)
+            self.assertIn("Designer Optimization Cards", html)
             self.assertIn("Power Tradeoffs", html)
+            self.assertIn("fixture RTL behavior", html)
             self.assertIn("generated_probe", html)
             self.assertIn("dataflow_heavy", html)
             self.assertNotIn("http://", html)
             self.assertNotIn("https://", html)
+            cards = json.loads((out.parent / "power_optimization_cards.json").read_text(encoding="utf-8"))
+            self.assertTrue(cards)
+            self.assertIn("card_id", cards[0])
+            self.assertIn("suggested_design_change", cards[0])
 
     def test_missing_optional_intent_does_not_crash(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -174,6 +203,7 @@ class VisualStoryTest(unittest.TestCase):
             html = out.read_text(encoding="utf-8")
             self.assertIn("no_intent", html)
             self.assertIn("hand-written", html)
+            self.assertTrue((out.parent / "power_optimization_cards.json").exists())
 
 
 if __name__ == "__main__":

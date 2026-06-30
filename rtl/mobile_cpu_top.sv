@@ -80,6 +80,17 @@ module mobile_cpu_top #(
   logic [31:0] branch_target;
   logic        execute_retired;
   logic        retired;
+  logic        fetch_valid;
+  logic        decode_valid;
+  logic        execute_valid;
+  logic        stall_fetch;
+  logic        stall_decode;
+  logic        stall_execute;
+  logic        fetch_ce;
+  logic        decode_ce;
+  logic        execute_ce;
+  logic        dataflow_ctrl_ce;
+  logic        dataflow_mac_ce;
 
   clock_gate u_core_clk_gate (
     .clk         (clk),
@@ -174,6 +185,15 @@ module mobile_cpu_top #(
   );
 
   assign mem_rdata = lsu_load_wb_data;
+  assign fetch_valid   = cpu_power_gate_n & !iso_core;
+  assign decode_valid  = cpu_power_gate_n & !iso_core;
+  assign execute_valid = cpu_power_gate_n & !iso_core;
+  assign stall_fetch   = lsu_stall;
+  assign stall_decode  = lsu_stall;
+  assign stall_execute = lsu_stall;
+  assign fetch_ce      = fetch_valid & !stall_fetch;
+  assign decode_ce     = decode_valid & !stall_decode;
+  assign execute_ce    = execute_valid & !stall_execute;
 
   load_store_unit u_lsu (
     .clk                (core_clk),
@@ -265,6 +285,9 @@ module mobile_cpu_top #(
     .op_valid   (dataflow_op_valid),
     .result     (dataflow_result)
   );
+
+  assign dataflow_ctrl_ce = dataflow_req_valid | dataflow_resp_valid | dataflow_busy;
+  assign dataflow_mac_ce  = dataflow_op_valid;
 
   assign cpu_sleeping = !core_clk_en || !cpu_power_gate_n;
   assign debug_pc     = instr_addr;

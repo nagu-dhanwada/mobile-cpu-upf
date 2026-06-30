@@ -118,6 +118,30 @@ memory-mapped control traffic. Whether that is a win depends on how many useful
 MAC operations are done per MMIO sequence, whether repeat mode is used, and how
 much low-power recovery energy is included in the scenario.
 
+## Designer Optimization Cards
+
+The visual story also emits an actionable low-power review artifact:
+
+```text
+reports/visual_story/power_optimization_cards.json
+```
+
+Each card is generated from the workload profile and IEEE 2416 activity counts.
+The card names the wasting mechanism, RTL hierarchy, evidence, suggested design
+change, expected benefit, risk, verification plan, before metrics, and target
+after metrics. The first card set looks for:
+
+- dataflow MMIO/control traffic that is too high per useful MAC,
+- LSU stall cycles that keep the CPU waiting on memory or MMIO,
+- front-end valid work held during load/store stalls,
+- low dataflow MAC utilization while the dataflow block is clocked,
+- domain-energy evidence that says whether a new dataflow power domain is
+  premature.
+
+Treat these as logic-design review prompts. A card is not a signoff result; it
+is a traceable reason to make a small RTL change, then rerun the same workload
+and compare the `before_metrics` and `after_metrics` fields.
+
 ## Commands
 
 Generate the default visual story data and dashboard:

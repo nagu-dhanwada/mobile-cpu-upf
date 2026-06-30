@@ -593,10 +593,16 @@ class PowerAwareSim {
         break;
       case MODE_DEEP_SLEEP:
         if (!script_checked_deep_sleep_) {
-          require(!cpu_on(), "scenario_deep_sleep_cpu_off",
-                  "CPU switched domain should be off in DEEP_SLEEP");
-          require(!mem_on(), "scenario_deep_sleep_mem_off",
-                  "MEM switched domain should be off in DEEP_SLEEP");
+          require(cpu_on() == !power_intent::kCpuHasSwitch,
+                  "scenario_deep_sleep_cpu_switch",
+                  power_intent::kCpuHasSwitch
+                      ? "CPU switched domain should be off in DEEP_SLEEP"
+                      : "CPU has no switch in this scheme and should remain modeled on");
+          require(mem_on() == !power_intent::kMemHasSwitch,
+                  "scenario_deep_sleep_mem_switch",
+                  power_intent::kMemHasSwitch
+                      ? "MEM switched domain should be off in DEEP_SLEEP"
+                      : "MEM has no switch in this scheme and should remain modeled on");
           require(cpu_isolated(), "scenario_deep_sleep_cpu_isolated",
                   "CPU isolation should assert in DEEP_SLEEP");
           require(mem_isolated(), "scenario_deep_sleep_mem_isolated",
