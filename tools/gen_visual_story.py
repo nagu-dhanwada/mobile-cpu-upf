@@ -40,6 +40,18 @@ def load_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def load_optional_json(path: Path | None, default: Any) -> Any:
+    if path is None or not path.exists():
+        return default
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def load_optional_text(path: Path | None) -> str:
+    if path is None or not path.exists():
+        return ""
+    return path.read_text(encoding="utf-8")
+
+
 def report_dir_for(report_root: Path, workload: str, tech: str, scheme: str) -> Path:
     return report_root / f"{workload}_{tech}_{scheme}"
 
@@ -715,6 +727,202 @@ def render_verification(items: list[str]) -> str:
     return "".join(f"<li>{esc(item)}</li>" for item in items)
 
 
+def status_class(status: object) -> str:
+    value = str(status or "info").lower()
+    return value if value in {"green", "yellow", "red", "info", "pass", "warning", "fail"} else "info"
+
+
+def render_status(value: object) -> str:
+    cls = status_class(value)
+    return f"<span class=\"status {cls}\">{esc(value)}</span>"
+
+
+def build_checkin_summary_html(metrics: dict[str, Any], delta: dict[str, Any], summary_text: str) -> str:
+    if not metrics:
+        return """
+        <section class="panel">
+          <h2>Check-in Summary</h2>
+          <p class="muted">No check-in metrics were provided. Run <code>make power-check</code> to generate metrics, deltas, and summary artifacts.</p>
+        </section>
+        """
+    counts = delta.get("status_counts", {"green": 0, "yellow": 0, "red": 0, "info": 0})
+    overall = "pass"
+    if counts.get("red", 0):
+        overall = "fail"
+    elif counts.get("yellow", 0):
+        overall = "warning"
+    missing = len(metrics.get("missing_metrics", [])) + len(metrics.get("missing_hierarchy_mappings", []))
+    snippet = ""
+    if summary_text:
+        summary_preview = "\n".join(summary_text.splitlines()[:18])
+        snippet = f'<pre class="summary-snippet">{esc(summary_preview)}</pre>'
+    return f"""
+    <section class="panel">
+      <h2>Check-in Summary</h2>
+      <div class="checkin-grid">
+        <div><b>{render_status(overall)}</b><span>methodology status</span></div>
+        <div><b>pass</b><span>correctness result</span></div>
+        <div><b>{metrics.get('workload_count', 0)}</b><span>workloads run</span></div>
+        <div><b>{counts.get('red', 0)}</b><span>red regressions</span></div>
+        <div><b>{counts.get('yellow', 0)}</b><span>yellow warnings</span></div>
+        <div><b>{counts.get('green', 0)}</b><span>green improvements</span></div>
+        <div><b>{missing}</b><span>missing data items</span></div>
+      </div>
+      <p class="muted">Full PR-style summary: <code>reports/checkin_summary.md</code>. The report is metrics-first: objective current metrics, then deltas, then advisory cards, then optional CI gates.</p>
+      {snippet}
+    </section>
+    """
+
+
+def flatten_delta_rows(delta: dict[str, Any]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for workload in delta.get("workloads", []):
+        for metric_name, values in workload.get("metrics", {}).items():
+            rows.append(
+                {
+                    "workload": workload.get("workload"),
+                    "hierarchy": workload.get("hierarchy"),
+                    "metric": metric_name,
+                    **values,
+                }
+            )
+    for row in delta.get("hierarchy", []):
+        rows.append(
+            {
+                "workload": row.get("workload"),
+                "hierarchy": row.get("hierarchy"),
+                "metric": row.get("event_or_metric"),
+                "baseline": row.get("baseline"),
+                "current": row.get("current"),
+                "delta": row.get("delta"),
+                "delta_percent": row.get("delta_percent"),
+                "status": row.get("status"),
+                "threshold": row.get("threshold"),
+            }
+        )
+    severity_order = {"red": 0, "yellow": 1, "green": 2, "info": 3}
+    return sorted(
+        rows,
+        key=lambda row: (
+            severity_order.get(str(row.get("status")), 4),
+            -abs(float(row.get("delta_percent") or 0.0)),
+        ),
+    )
+
+
+def build_metric_deltas_html(delta: dict[str, Any]) -> str:
+    if not delta or delta.get("status") == "no_baseline":
+        return """
+        <section class="panel">
+          <h2>Metric Deltas</h2>
+          <p class="muted">No baseline comparison is available yet. Run <code>make power-baseline</code>, then make an RTL change and run <code>make power-check</code>.</p>
+        </section>
+        """
+    rows = flatten_delta_rows(delta)[:30]
+    body = "".join(
+        f"<tr><td>{esc(row.get('workload'))}</td><td><code>{esc(row.get('hierarchy'))}</code></td>"
+        f"<td>{esc(row.get('metric'))}</td><td>{fmt(row.get('baseline'))}</td><td>{fmt(row.get('current'))}</td>"
+        f"<td>{fmt(row.get('delta'))}</td><td>{fmt(row.get('delta_percent'))}%</td><td>{render_status(row.get('status'))}</td></tr>"
+        for row in rows
+    )
+    return f"""
+    <section class="panel">
+      <h2>Metric Deltas</h2>
+      <p class="muted">Before/after comparisons are shown before cards. Red/yellow rows are the first things to inspect during RTL check-in.</p>
+      <table>
+        <thead><tr><th>Workload</th><th>Hierarchy</th><th>Metric</th><th>Baseline</th><th>Current</th><th>Delta</th><th>Delta %</th><th>Status</th></tr></thead>
+        <tbody>{body}</tbody>
+      </table>
+    </section>
+    """
+
+
+def build_hierarchy_attribution_html(metrics: dict[str, Any], delta: dict[str, Any], cards: list[dict[str, Any]]) -> str:
+    if not metrics:
+        return """
+        <section class="panel">
+          <h2>Hierarchy Attribution</h2>
+          <p class="muted">No hierarchy metrics were provided. Run <code>make power-check</code> to generate workload-to-hierarchy event attribution.</p>
+        </section>
+        """
+    card_by_hierarchy: dict[str, list[str]] = {}
+    for item in cards:
+        card_by_hierarchy.setdefault(str(item.get("rtl_hierarchy", "")), []).append(str(item.get("card_id", "")))
+    delta_by_key = {
+        (row.get("workload"), row.get("hierarchy"), row.get("event_or_metric")): row
+        for row in delta.get("hierarchy", [])
+    }
+    rows = []
+    for item in metrics.get("events", [])[:]:
+        key = (item.get("workload"), item.get("rtl_hierarchy"), item.get("event"))
+        drow = delta_by_key.get(key, {})
+        related_cards = ", ".join(card_by_hierarchy.get(str(item.get("rtl_hierarchy")), []))
+        rows.append(
+            {
+                "workload": item.get("workload"),
+                "hierarchy": item.get("rtl_hierarchy"),
+                "event": item.get("event"),
+                "count": item.get("count"),
+                "delta": drow.get("delta"),
+                "status": drow.get("status", "info"),
+                "card": related_cards,
+                "hint": item.get("designer_hint", ""),
+            }
+        )
+    rows = sorted(rows, key=lambda row: ({"red": 0, "yellow": 1, "green": 2, "info": 3}.get(str(row["status"]), 4), -int(row.get("count") or 0)))[:30]
+    body = "".join(
+        f"<tr><td>{esc(row['workload'])}</td><td><code>{esc(row['hierarchy'])}</code></td><td>{esc(row['event'])}</td>"
+        f"<td>{esc(row['count'])}</td><td>{fmt(row.get('delta')) if row.get('delta') is not None else 'n/a'}</td>"
+        f"<td>{render_status(row['status'])}</td><td>{esc(row['card'])}</td></tr>"
+        for row in rows
+    )
+    top = "".join(
+        f"<li><code>{esc(row.get('rtl_hierarchy'))}</code> on {esc(row.get('workload'))}: {esc(row.get('total_event_count'))} events</li>"
+        for row in metrics.get("hierarchy_rollup", [])[:8]
+    )
+    missing = "".join(f"<li><code>{esc(item)}</code></li>" for item in metrics.get("missing_hierarchy_mappings", [])[:10])
+    return f"""
+    <section class="panel">
+      <h2>Hierarchy Attribution</h2>
+      <p class="muted">This is the designer drilldown: workload to hierarchy to event, with related card IDs when a recommendation exists.</p>
+      <h3>Top Hierarchy Contributors</h3>
+      <ul class="scheme-list">{top or '<li>No hierarchy contributors found.</li>'}</ul>
+      <table>
+        <thead><tr><th>Workload</th><th>Hierarchy</th><th>Event/Metric</th><th>Count</th><th>Delta</th><th>Status</th><th>Related Card</th></tr></thead>
+        <tbody>{body}</tbody>
+      </table>
+      <h3 style="margin-top:16px">Missing Hierarchy Mappings</h3>
+      <ul class="scheme-list">{missing or '<li>None in the current workload set.</li>'}</ul>
+    </section>
+    """
+
+
+def build_missing_data_html(metrics: dict[str, Any]) -> str:
+    if not metrics:
+        return """
+        <section class="panel">
+          <h2>Missing Data / Instrumentation Needed</h2>
+          <p class="muted">No missing-data report was provided. Run <code>make power-check</code> to generate instrumentation guidance.</p>
+        </section>
+        """
+    missing_metrics = metrics.get("missing_metrics", [])
+    rows = "".join(
+        f"<tr><td>{esc(item.get('workload', 'all'))}</td><td>{esc(item.get('metric'))}</td>"
+        f"<td>{esc(item.get('reason'))}</td><td>{esc(item.get('suggested_instrumentation'))}</td></tr>"
+        for item in missing_metrics[:30]
+    )
+    return f"""
+    <section class="panel">
+      <h2>Missing Data / Instrumentation Needed</h2>
+      <p class="muted">Unavailable metrics are explicit so reviewers can separate measured evidence from estimated or future instrumentation.</p>
+      <table>
+        <thead><tr><th>Workload</th><th>Metric</th><th>Reason</th><th>Suggested Counter/Signal</th></tr></thead>
+        <tbody>{rows or '<tr><td colspan="4">No missing metrics reported.</td></tr>'}</tbody>
+      </table>
+    </section>
+    """
+
+
 def build_optimization_cards_html(cards: list[dict[str, Any]]) -> str:
     if not cards:
         return """
@@ -740,6 +948,10 @@ def build_optimization_cards_html(cards: list[dict[str, Any]]) -> str:
                 <dd>{esc(item['observation'])}</dd>
                 <dt>Where</dt>
                 <dd><code>{esc(item['rtl_hierarchy'])}</code></dd>
+                <dt>Trigger</dt>
+                <dd>{esc(item.get('triggering_metric', 'metric'))} · {esc(item.get('triggering_event', 'event'))}</dd>
+                <dt>Likely Control/FSM</dt>
+                <dd>{esc(item.get('likely_control_signal_or_fsm', ''))}</dd>
                 <dt>Evidence</dt>
                 <dd>{render_evidence(item.get('evidence', {}))}</dd>
                 <dt>Recommendation</dt>
@@ -752,6 +964,8 @@ def build_optimization_cards_html(cards: list[dict[str, Any]]) -> str:
                 <dd><ul>{render_verification(item.get('verification_plan', []))}</ul></dd>
                 <dt>Next RTL Change</dt>
                 <dd>{esc(item.get('next_rtl_change', ''))}</dd>
+                <dt>Confidence</dt>
+                <dd>{esc(item.get('confidence', 'medium'))} · {esc(item.get('blocking_status', 'advisory'))}</dd>
               </dl>
             </article>
             """
@@ -773,6 +987,10 @@ def build_scheme_summary(scheme: dict[str, Any], scheme_name: str) -> str:
     methodology = scheme.get("methodology", {})
     methodology_sections: list[str] = []
     for title, key in (
+        ("Implemented RTL Features", "implemented_rtl_features"),
+        ("Estimated Features", "estimated_features"),
+        ("Not Yet Implemented", "not_yet_implemented"),
+        ("Detected Opportunities", "detected_opportunities"),
         ("Implemented In RTL", "gated_in_rtl"),
         ("Estimated Behavior", "estimated_behavior"),
         ("Designer Use", "designer_use"),
@@ -800,6 +1018,9 @@ def html_document(
     cases: list[dict[str, Any]],
     scheme: dict[str, Any],
     optimization_cards: list[dict[str, Any]],
+    checkin_metrics: dict[str, Any],
+    checkin_delta: dict[str, Any],
+    checkin_summary: str,
     tech: str,
     scheme_name: str,
 ) -> str:
@@ -819,6 +1040,10 @@ def html_document(
         for case in cases
     )
     optimization_section = build_optimization_cards_html(optimization_cards)
+    checkin_summary_section = build_checkin_summary_html(checkin_metrics, checkin_delta, checkin_summary)
+    metric_delta_section = build_metric_deltas_html(checkin_delta)
+    hierarchy_section = build_hierarchy_attribution_html(checkin_metrics, checkin_delta, optimization_cards)
+    missing_data_section = build_missing_data_html(checkin_metrics)
     states = "".join(
         f'<li><i style="background:{color}"></i>{esc(state)}</li>'
         for state, color in STATE_COLORS.items()
@@ -899,6 +1124,15 @@ def html_document(
     .metric-grid div {{ background: var(--soft); border-radius: 6px; padding: 10px; min-height: 68px; }}
     .metric-grid b {{ display: block; font-size: 18px; }}
     .metric-grid span {{ color: var(--muted); font-size: 12px; }}
+    .checkin-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 12px 0; }}
+    .checkin-grid div {{ background: var(--soft); border-radius: 6px; padding: 10px; min-height: 64px; }}
+    .checkin-grid b {{ display: block; font-size: 18px; }}
+    .checkin-grid span {{ color: var(--muted); font-size: 12px; }}
+    .status {{ display: inline-block; border-radius: 999px; padding: 3px 8px; font-size: 11px; font-weight: 750; text-transform: uppercase; color: white; background: #64748b; }}
+    .status.green, .status.pass {{ background: #20855a; }}
+    .status.yellow, .status.warning {{ background: #bf6b11; }}
+    .status.red, .status.fail {{ background: #c93434; }}
+    .status.info {{ background: #64748b; }}
     .instruction-list, .legend {{ list-style: none; padding: 0; margin: 0; }}
     .instruction-list li {{ display: flex; justify-content: space-between; border-top: 1px solid #edf0f5; padding: 5px 0; font-size: 13px; }}
     .scheme-list {{ margin: 7px 0 12px; padding-left: 18px; color: var(--muted); font-size: 13px; }}
@@ -962,6 +1196,7 @@ def html_document(
     th {{ color: var(--muted); font-weight: 600; }}
     .muted {{ color: var(--muted); }}
     .code-data {{ white-space: pre-wrap; overflow: auto; max-height: 220px; background: #111827; color: #d1e7ff; border-radius: 8px; padding: 14px; font-size: 12px; }}
+    .summary-snippet {{ white-space: pre-wrap; overflow: auto; max-height: 260px; background: #111827; color: #d1e7ff; border-radius: 8px; padding: 14px; font-size: 12px; }}
     @media (max-width: 820px) {{
       main {{ padding: 16px; }}
       .two-col {{ grid-template-columns: 1fr; }}
@@ -975,6 +1210,12 @@ def html_document(
     <p>Technology <code>{esc(tech)}</code>, scheme <code>{esc(scheme_name)}</code>. This dashboard connects workload intent, CPU activity, power states, and IEEE 2416 estimates.</p>
   </header>
   <main>
+    {checkin_summary_section}
+    {metric_delta_section}
+    {hierarchy_section}
+    {optimization_section}
+    {missing_data_section}
+
     <section class="two-col">
       <div class="panel">
         <h2>How The CPU Moves Work</h2>
@@ -1000,8 +1241,6 @@ def html_document(
       <h2>Workload Cards</h2>
       <div class="cards">{cards}</div>
     </section>
-
-    {optimization_section}
 
     <section class="panel">
       <h2>Power Tradeoffs</h2>
@@ -1042,6 +1281,10 @@ def main() -> None:
     parser.add_argument("--scheme-root", type=Path, default=Path("power_schemes"))
     parser.add_argument("--out", type=Path, default=Path("reports/visual_story/index.html"))
     parser.add_argument("--cards-out", type=Path)
+    parser.add_argument("--cards-in", type=Path)
+    parser.add_argument("--metrics-in", type=Path)
+    parser.add_argument("--delta-in", type=Path)
+    parser.add_argument("--summary-in", type=Path)
     args = parser.parse_args()
 
     cases = [
@@ -1049,13 +1292,18 @@ def main() -> None:
         for workload in args.workloads
     ]
     scheme = load_scheme(args.scheme_root, args.scheme)
-    optimization_cards = generate_power_optimization_cards(cases, args.scheme)
+    optimization_cards = load_optional_json(args.cards_in, None)
+    if optimization_cards is None:
+        optimization_cards = generate_power_optimization_cards(cases, args.scheme)
+    checkin_metrics = load_optional_json(args.metrics_in, {})
+    checkin_delta = load_optional_json(args.delta_in, {})
+    checkin_summary = load_optional_text(args.summary_in)
     cards_out = args.cards_out or (args.out.parent / "power_optimization_cards.json")
     args.out.parent.mkdir(parents=True, exist_ok=True)
     cards_out.parent.mkdir(parents=True, exist_ok=True)
     cards_out.write_text(json.dumps(optimization_cards, indent=2) + "\n", encoding="utf-8")
     args.out.write_text(
-        html_document(cases, scheme, optimization_cards, args.tech, args.scheme),
+        html_document(cases, scheme, optimization_cards, checkin_metrics, checkin_delta, checkin_summary, args.tech, args.scheme),
         encoding="utf-8",
     )
     print(f"wrote {cards_out}")

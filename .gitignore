@@ -14,6 +14,10 @@ reports/*_power_sim_*.json
 reports/*_power_sim_*.md
 reports/generated/
 reports/visual_story/
+reports/power_metrics.json
+reports/power_metrics_delta.json
+reports/checkin_summary.md
+reports/power_optimization_cards.json
 reports/power_sim_*.json
 reports/power_sim_*.md
 reports/2416/

@@ -855,6 +855,12 @@
       <Event name="mac_ce_cycle" mode="RUN" style="pinTransition" when="dataflow_mac_ce &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
         <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.00003" />
       </Event>
+      <Event name="done_cycle" mode="RUN" style="pinTransition" when="dataflow_done &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.000015" />
+      </Event>
+      <Event name="done_assert" mode="RUN" style="pinTransition" when="$rose(dataflow_done) &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.00003" />
+      </Event>
       <Event name="rtl_toggle" mode="RUN" style="pinTransition" when="vcd_activity &amp;&amp; domain_on &amp;&amp; block == dataflow_unit" inputPin="activity" inputTransition="rising">
         <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.00008" />
       </Event>

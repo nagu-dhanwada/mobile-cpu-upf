@@ -87,6 +87,18 @@
       <Event name="branch_redirect" mode="RUN" style="pinTransition" when="branch_taken &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
         <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.035547576" />
       </Event>
+      <Event name="fetch_valid_cycle" mode="RUN" style="pinTransition" when="fetch_valid &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.000029623" />
+      </Event>
+      <Event name="stall_fetch_cycle" mode="RUN" style="pinTransition" when="stall_fetch &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.000029623" />
+      </Event>
+      <Event name="stall_valid_cycle" mode="RUN" style="pinTransition" when="fetch_valid &amp;&amp; stall_fetch &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.000029623" />
+      </Event>
+      <Event name="fetch_ce_cycle" mode="RUN" style="pinTransition" when="fetch_ce &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.000029623" />
+      </Event>
       <Event name="rtl_toggle" mode="RUN" style="pinTransition" when="vcd_activity &amp;&amp; domain_on &amp;&amp; block == fetch_unit" inputPin="activity" inputTransition="rising">
         <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.000078995" />
       </Event>
@@ -107,9 +119,9 @@
       <Parameter name="param_pc_width" value="32" dataType="string" />
       <Parameter name="param_pc_width_unit" value="bit" dataType="string" />
       <Parameter name="abstraction_level" value="gate" dataType="string" />
-      <Parameter name="synthesis_source" value="build/synth/memory_burst/mobile_cpu_synth.json" dataType="string" />
-      <Parameter name="synthesis_metrics" value="build/synth/memory_burst/mobile_cpu_synth_metrics.json" dataType="string" />
-      <Parameter name="synthesis_workload" value="memory_burst" dataType="string" />
+      <Parameter name="synthesis_source" value="build/synth/cpu_mac/mobile_cpu_synth.json" dataType="string" />
+      <Parameter name="synthesis_metrics" value="build/synth/cpu_mac/mobile_cpu_synth_metrics.json" dataType="string" />
+      <Parameter name="synthesis_workload" value="cpu_mac" dataType="string" />
       <Parameter name="synthesis_cell_count" value="124" dataType="integer" />
       <Parameter name="synthesis_comb_cells" value="92" dataType="integer" />
       <Parameter name="synthesis_seq_cells" value="32" dataType="integer" />
@@ -175,10 +187,13 @@
     </Modes>
     <Events>
       <Event name="instruction_fetch" mode="RUN" style="pinTransition" when="instr_addr_sample &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
-        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.05" />
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.054054054" />
+      </Event>
+      <Event name="stall_hold_cycle" mode="RUN" style="pinTransition" when="stall_fetch &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.000004054" />
       </Event>
       <Event name="rtl_toggle" mode="RUN" style="pinTransition" when="vcd_activity &amp;&amp; domain_on &amp;&amp; block == instr_rom" inputPin="activity" inputTransition="rising">
-        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.00002" />
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.000021622" />
       </Event>
     </Events>
     <ModelParameters>
@@ -190,7 +205,7 @@
       <Parameter name="logic_gates" value="120" dataType="integer" />
       <Parameter name="flop_bits" value="0" dataType="integer" />
       <Parameter name="sram_bits" value="1024" dataType="integer" />
-      <Parameter name="toggle_energy_pj" value="0.00002" dataType="float" />
+      <Parameter name="toggle_energy_pj" value="0.000021622" dataType="float" />
       <Parameter name="reference_voltage_v" value="0.8" dataType="float" />
       <Parameter name="dynamic_voltage_exponent" value="2" dataType="float" />
       <Parameter name="leakage_voltage_exponent" value="1.2" dataType="float" />
@@ -199,42 +214,42 @@
       <Parameter name="param_width" value="16" dataType="string" />
       <Parameter name="param_width_unit" value="bit" dataType="string" />
       <Parameter name="abstraction_level" value="gate" dataType="string" />
-      <Parameter name="synthesis_source" value="build/synth/memory_burst/mobile_cpu_synth.json" dataType="string" />
-      <Parameter name="synthesis_metrics" value="build/synth/memory_burst/mobile_cpu_synth_metrics.json" dataType="string" />
-      <Parameter name="synthesis_workload" value="memory_burst" dataType="string" />
-      <Parameter name="synthesis_cell_count" value="33" dataType="integer" />
-      <Parameter name="synthesis_comb_cells" value="33" dataType="integer" />
+      <Parameter name="synthesis_source" value="build/synth/cpu_mac/mobile_cpu_synth.json" dataType="string" />
+      <Parameter name="synthesis_metrics" value="build/synth/cpu_mac/mobile_cpu_synth_metrics.json" dataType="string" />
+      <Parameter name="synthesis_workload" value="cpu_mac" dataType="string" />
+      <Parameter name="synthesis_cell_count" value="48" dataType="integer" />
+      <Parameter name="synthesis_comb_cells" value="48" dataType="integer" />
       <Parameter name="synthesis_seq_cells" value="0" dataType="integer" />
       <Parameter name="synthesis_latch_cells" value="0" dataType="integer" />
       <Parameter name="synthesis_memory_cells" value="0" dataType="integer" />
-      <Parameter name="synthesis_equivalent_gates" value="33" dataType="float" />
-      <Parameter name="synthesis_dynamic_calibration" value="0.25" dataType="float" />
-      <Parameter name="synthesis_leakage_calibration" value="0.325" dataType="float" />
+      <Parameter name="synthesis_equivalent_gates" value="48" dataType="float" />
+      <Parameter name="synthesis_dynamic_calibration" value="0.27027" dataType="float" />
+      <Parameter name="synthesis_leakage_calibration" value="0.343243" dataType="float" />
     </ModelParameters>
     <States units="mW" mutuallyExclusive="true">
       <State name="RUN" when="power_mode == RUN" units="mW">
-        <StaticPower value="0.000041184" units="mW" source="VDD" sink="VSS">
-          <Expression>0.000041184 * leakage_voltage_scale * leakage_temperature_scale</Expression>
+        <StaticPower value="0.000043496" units="mW" source="VDD" sink="VSS">
+          <Expression>0.000043496 * leakage_voltage_scale * leakage_temperature_scale</Expression>
         </StaticPower>
       </State>
       <State name="IDLE" when="power_mode == IDLE" units="mW">
-        <StaticPower value="0.000033771" units="mW" source="VDD" sink="VSS">
-          <Expression>0.000033771 * leakage_voltage_scale * leakage_temperature_scale</Expression>
+        <StaticPower value="0.000035667" units="mW" source="VDD" sink="VSS">
+          <Expression>0.000035667 * leakage_voltage_scale * leakage_temperature_scale</Expression>
         </StaticPower>
       </State>
       <State name="LIGHT_SLEEP" when="power_mode == LIGHT_SLEEP" units="mW">
-        <StaticPower value="0.000011532" units="mW" source="VDD" sink="VSS">
-          <Expression>0.000011532 * leakage_voltage_scale * leakage_temperature_scale</Expression>
+        <StaticPower value="0.000012179" units="mW" source="VDD" sink="VSS">
+          <Expression>0.000012179 * leakage_voltage_scale * leakage_temperature_scale</Expression>
         </StaticPower>
       </State>
       <State name="DEEP_SLEEP" when="power_mode == DEEP_SLEEP" units="mW">
-        <StaticPower value="0.000000618" units="mW" source="VDD" sink="VSS">
-          <Expression>0.000000618 * leakage_voltage_scale * leakage_temperature_scale</Expression>
+        <StaticPower value="0.000000652" units="mW" source="VDD" sink="VSS">
+          <Expression>0.000000652 * leakage_voltage_scale * leakage_temperature_scale</Expression>
         </StaticPower>
       </State>
       <State name="WAKE" when="power_mode == WAKE" units="mW">
-        <StaticPower value="0.000041184" units="mW" source="VDD" sink="VSS">
-          <Expression>0.000041184 * leakage_voltage_scale * leakage_temperature_scale</Expression>
+        <StaticPower value="0.000043496" units="mW" source="VDD" sink="VSS">
+          <Expression>0.000043496 * leakage_voltage_scale * leakage_temperature_scale</Expression>
         </StaticPower>
       </State>
     </States>
@@ -269,6 +284,18 @@
       <Event name="decode_instruction" mode="RUN" style="pinTransition" when="retired_instruction &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
         <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.0072" />
       </Event>
+      <Event name="decode_valid_cycle" mode="RUN" style="pinTransition" when="decode_valid &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.00003" />
+      </Event>
+      <Event name="stall_decode_cycle" mode="RUN" style="pinTransition" when="stall_decode &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.00003" />
+      </Event>
+      <Event name="stall_valid_cycle" mode="RUN" style="pinTransition" when="decode_valid &amp;&amp; stall_decode &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.00003" />
+      </Event>
+      <Event name="decode_ce_cycle" mode="RUN" style="pinTransition" when="decode_ce &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.00003" />
+      </Event>
       <Event name="rtl_toggle" mode="RUN" style="pinTransition" when="vcd_activity &amp;&amp; domain_on &amp;&amp; block == decode_unit" inputPin="activity" inputTransition="rising">
         <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.00008" />
       </Event>
@@ -289,9 +316,9 @@
       <Parameter name="param_instruction_width" value="16" dataType="string" />
       <Parameter name="param_instruction_width_unit" value="bit" dataType="string" />
       <Parameter name="abstraction_level" value="gate" dataType="string" />
-      <Parameter name="synthesis_source" value="build/synth/memory_burst/mobile_cpu_synth.json" dataType="string" />
-      <Parameter name="synthesis_metrics" value="build/synth/memory_burst/mobile_cpu_synth_metrics.json" dataType="string" />
-      <Parameter name="synthesis_workload" value="memory_burst" dataType="string" />
+      <Parameter name="synthesis_source" value="build/synth/cpu_mac/mobile_cpu_synth.json" dataType="string" />
+      <Parameter name="synthesis_metrics" value="build/synth/cpu_mac/mobile_cpu_synth_metrics.json" dataType="string" />
+      <Parameter name="synthesis_workload" value="cpu_mac" dataType="string" />
       <Parameter name="synthesis_cell_count" value="0" dataType="integer" />
       <Parameter name="synthesis_comb_cells" value="0" dataType="integer" />
       <Parameter name="synthesis_seq_cells" value="0" dataType="integer" />
@@ -388,9 +415,9 @@
       <Parameter name="param_width" value="32" dataType="string" />
       <Parameter name="param_width_unit" value="bit" dataType="string" />
       <Parameter name="abstraction_level" value="gate" dataType="string" />
-      <Parameter name="synthesis_source" value="build/synth/memory_burst/mobile_cpu_synth.json" dataType="string" />
-      <Parameter name="synthesis_metrics" value="build/synth/memory_burst/mobile_cpu_synth_metrics.json" dataType="string" />
-      <Parameter name="synthesis_workload" value="memory_burst" dataType="string" />
+      <Parameter name="synthesis_source" value="build/synth/cpu_mac/mobile_cpu_synth.json" dataType="string" />
+      <Parameter name="synthesis_metrics" value="build/synth/cpu_mac/mobile_cpu_synth_metrics.json" dataType="string" />
+      <Parameter name="synthesis_workload" value="cpu_mac" dataType="string" />
       <Parameter name="synthesis_cell_count" value="2477" dataType="integer" />
       <Parameter name="synthesis_comb_cells" value="1997" dataType="integer" />
       <Parameter name="synthesis_seq_cells" value="480" dataType="integer" />
@@ -456,28 +483,40 @@
     </Modes>
     <Events>
       <Event name="alu_add" mode="RUN" style="pinTransition" when="opcode.ADD &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
-        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.150305499" />
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.1499389" />
       </Event>
       <Event name="alu_sub" mode="RUN" style="pinTransition" when="opcode.SUB &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
-        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.157820774" />
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.157435845" />
       </Event>
       <Event name="alu_and" mode="RUN" style="pinTransition" when="opcode.AND &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
-        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.06312831" />
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.062974338" />
       </Event>
       <Event name="alu_or" mode="RUN" style="pinTransition" when="opcode.OR &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
-        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.06312831" />
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.062974338" />
       </Event>
       <Event name="alu_addi" mode="RUN" style="pinTransition" when="opcode.ADDI &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
-        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.138281059" />
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.137943788" />
       </Event>
       <Event name="branch_compare" mode="RUN" style="pinTransition" when="opcode.BEQ &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
-        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.105213849" />
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.10495723" />
       </Event>
       <Event name="wait_for_interrupt" mode="RUN" style="pinTransition" when="opcode.WFI &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
-        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.007515275" />
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.007496945" />
+      </Event>
+      <Event name="execute_valid_cycle" mode="RUN" style="pinTransition" when="execute_valid &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.000093712" />
+      </Event>
+      <Event name="stall_execute_cycle" mode="RUN" style="pinTransition" when="stall_execute &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.000093712" />
+      </Event>
+      <Event name="stall_valid_cycle" mode="RUN" style="pinTransition" when="execute_valid &amp;&amp; stall_execute &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.000093712" />
+      </Event>
+      <Event name="execute_ce_cycle" mode="RUN" style="pinTransition" when="execute_ce &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.000093712" />
       </Event>
       <Event name="rtl_toggle" mode="RUN" style="pinTransition" when="vcd_activity &amp;&amp; domain_on &amp;&amp; block == execute_unit" inputPin="activity" inputTransition="rising">
-        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.000250509" />
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.000249898" />
       </Event>
     </Events>
     <ModelParameters>
@@ -489,49 +528,259 @@
       <Parameter name="logic_gates" value="380" dataType="integer" />
       <Parameter name="flop_bits" value="0" dataType="integer" />
       <Parameter name="sram_bits" value="0" dataType="integer" />
-      <Parameter name="toggle_energy_pj" value="0.000250509" dataType="float" />
+      <Parameter name="toggle_energy_pj" value="0.000249898" dataType="float" />
       <Parameter name="reference_voltage_v" value="0.8" dataType="float" />
       <Parameter name="dynamic_voltage_exponent" value="2" dataType="float" />
       <Parameter name="leakage_voltage_exponent" value="1.2" dataType="float" />
       <Parameter name="param_datapath_width" value="32" dataType="string" />
       <Parameter name="param_datapath_width_unit" value="bit" dataType="string" />
       <Parameter name="abstraction_level" value="gate" dataType="string" />
-      <Parameter name="synthesis_source" value="build/synth/memory_burst/mobile_cpu_synth.json" dataType="string" />
-      <Parameter name="synthesis_metrics" value="build/synth/memory_burst/mobile_cpu_synth_metrics.json" dataType="string" />
-      <Parameter name="synthesis_workload" value="memory_burst" dataType="string" />
-      <Parameter name="synthesis_cell_count" value="1230" dataType="integer" />
-      <Parameter name="synthesis_comb_cells" value="1230" dataType="integer" />
+      <Parameter name="synthesis_source" value="build/synth/cpu_mac/mobile_cpu_synth.json" dataType="string" />
+      <Parameter name="synthesis_metrics" value="build/synth/cpu_mac/mobile_cpu_synth_metrics.json" dataType="string" />
+      <Parameter name="synthesis_workload" value="cpu_mac" dataType="string" />
+      <Parameter name="synthesis_cell_count" value="1227" dataType="integer" />
+      <Parameter name="synthesis_comb_cells" value="1227" dataType="integer" />
       <Parameter name="synthesis_seq_cells" value="0" dataType="integer" />
       <Parameter name="synthesis_latch_cells" value="0" dataType="integer" />
       <Parameter name="synthesis_memory_cells" value="0" dataType="integer" />
-      <Parameter name="synthesis_equivalent_gates" value="1230" dataType="float" />
-      <Parameter name="synthesis_dynamic_calibration" value="3.131365" dataType="float" />
-      <Parameter name="synthesis_leakage_calibration" value="2.918228" dataType="float" />
+      <Parameter name="synthesis_equivalent_gates" value="1227" dataType="float" />
+      <Parameter name="synthesis_dynamic_calibration" value="3.123727" dataType="float" />
+      <Parameter name="synthesis_leakage_calibration" value="2.911354" dataType="float" />
     </ModelParameters>
     <States units="mW" mutuallyExclusive="true">
       <State name="RUN" when="power_mode == RUN" units="mW">
-        <StaticPower value="0.000887141" units="mW" source="VDD" sink="VSS">
-          <Expression>0.000887141 * leakage_voltage_scale * leakage_temperature_scale</Expression>
+        <StaticPower value="0.000885052" units="mW" source="VDD" sink="VSS">
+          <Expression>0.000885052 * leakage_voltage_scale * leakage_temperature_scale</Expression>
         </StaticPower>
       </State>
       <State name="IDLE" when="power_mode == IDLE" units="mW">
-        <StaticPower value="0.000727456" units="mW" source="VDD" sink="VSS">
-          <Expression>0.000727456 * leakage_voltage_scale * leakage_temperature_scale</Expression>
+        <StaticPower value="0.000725742" units="mW" source="VDD" sink="VSS">
+          <Expression>0.000725742 * leakage_voltage_scale * leakage_temperature_scale</Expression>
         </StaticPower>
       </State>
       <State name="LIGHT_SLEEP" when="power_mode == LIGHT_SLEEP" units="mW">
-        <StaticPower value="0.0002484" units="mW" source="VDD" sink="VSS">
-          <Expression>0.0002484 * leakage_voltage_scale * leakage_temperature_scale</Expression>
+        <StaticPower value="0.000247814" units="mW" source="VDD" sink="VSS">
+          <Expression>0.000247814 * leakage_voltage_scale * leakage_temperature_scale</Expression>
         </StaticPower>
       </State>
       <State name="DEEP_SLEEP" when="power_mode == DEEP_SLEEP" units="mW">
-        <StaticPower value="0.000013307" units="mW" source="VDD" sink="VSS">
-          <Expression>0.000013307 * leakage_voltage_scale * leakage_temperature_scale</Expression>
+        <StaticPower value="0.000013276" units="mW" source="VDD" sink="VSS">
+          <Expression>0.000013276 * leakage_voltage_scale * leakage_temperature_scale</Expression>
         </StaticPower>
       </State>
       <State name="WAKE" when="power_mode == WAKE" units="mW">
-        <StaticPower value="0.000887141" units="mW" source="VDD" sink="VSS">
-          <Expression>0.000887141 * leakage_voltage_scale * leakage_temperature_scale</Expression>
+        <StaticPower value="0.000885052" units="mW" source="VDD" sink="VSS">
+          <Expression>0.000885052 * leakage_voltage_scale * leakage_temperature_scale</Expression>
+        </StaticPower>
+      </State>
+    </States>
+  </Cell>
+  <Cell name="load_store_unit" condition="generic_7nm_nominal" datagen="estimated">
+    <Pins>
+      <Pin name="VDD" direction="pg" pinType="primaryPower" />
+      <Pin name="VSS" direction="pg" pinType="primaryGround" />
+      <Pin name="clk" direction="input" dataType="bit" pinType="clock" relatedPower="VDD" relatedGround="VSS" />
+      <Pin name="activity" direction="input" dataType="bit" pinType="signal" relatedPower="VDD" relatedGround="VSS" />
+      <Pin name="power_mode" width="[2:0]" direction="input" dataType="integer" pinType="signal" relatedPower="VDD" relatedGround="VSS" />
+      <Pin name="dvfs_level" width="[1:0]" direction="input" dataType="integer" pinType="signal" relatedPower="VDD" relatedGround="VSS" />
+      <Pin name="domain_on" direction="input" dataType="bit" pinType="signal" relatedPower="VDD" relatedGround="VSS" />
+    </Pins>
+    <Modes mutuallyExclusive="true" defaultMode="RUN" initialMode="RUN">
+      <Mode name="RUN" when="power_mode == RUN" value="0">
+        <Expression>mode_is_run &amp;&amp; clock_enabled &amp;&amp; supply_VDD_CPU_NOM</Expression>
+      </Mode>
+      <Mode name="IDLE" when="power_mode == IDLE" value="1">
+        <Expression>mode_is_idle &amp;&amp; clock_gated &amp;&amp; supply_VDD_CPU_LOW</Expression>
+      </Mode>
+      <Mode name="LIGHT_SLEEP" when="power_mode == LIGHT_SLEEP" value="2">
+        <Expression>mode_is_light_sleep &amp;&amp; clock_gated &amp;&amp; supply_VDD_CPU_LOW</Expression>
+      </Mode>
+      <Mode name="DEEP_SLEEP" when="power_mode == DEEP_SLEEP" value="3">
+        <Expression>mode_is_deep_sleep &amp;&amp; clock_gated &amp;&amp; supply_off</Expression>
+      </Mode>
+      <Mode name="WAKE" when="power_mode == WAKE" value="4">
+        <Expression>mode_is_wake &amp;&amp; clock_enabled &amp;&amp; supply_VDD_CPU_NOM</Expression>
+      </Mode>
+    </Modes>
+    <Events>
+      <Event name="clock_cycle" mode="RUN" style="pinTransition" when="core_clock_enabled &amp;&amp; domain_on" inputPin="clk" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.074230483" />
+      </Event>
+      <Event name="request_issue" mode="RUN" style="pinTransition" when="dbus_req_valid &amp;&amp; dbus_req_ready &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.01332342" />
+      </Event>
+      <Event name="response_complete" mode="RUN" style="pinTransition" when="dbus_resp_valid &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.009516729" />
+      </Event>
+      <Event name="stall_cycle" mode="RUN" style="pinTransition" when="lsu_stall &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.000951673" />
+      </Event>
+      <Event name="error_response" mode="RUN" style="pinTransition" when="dbus_resp_error &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.001427509" />
+      </Event>
+      <Event name="rtl_toggle" mode="RUN" style="pinTransition" when="vcd_activity &amp;&amp; domain_on &amp;&amp; block == load_store_unit" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.000063445" />
+      </Event>
+    </Events>
+    <ModelParameters>
+      <Parameter name="module" value="load_store_unit" dataType="string" />
+      <Parameter name="rtl_path" value="TOP.mobile_cpu_power_top.u_dut.u_lsu" dataType="string" />
+      <Parameter name="power_domain" value="PD_CPU" dataType="string" />
+      <Parameter name="clock_name" value="core" dataType="string" />
+      <Parameter name="model_class" value="synthesis_calibrated_macro" dataType="string" />
+      <Parameter name="logic_gates" value="220" dataType="integer" />
+      <Parameter name="flop_bits" value="104" dataType="integer" />
+      <Parameter name="sram_bits" value="0" dataType="integer" />
+      <Parameter name="toggle_energy_pj" value="0.000063445" dataType="float" />
+      <Parameter name="reference_voltage_v" value="0.8" dataType="float" />
+      <Parameter name="dynamic_voltage_exponent" value="2" dataType="float" />
+      <Parameter name="leakage_voltage_exponent" value="1.2" dataType="float" />
+      <Parameter name="param_outstanding" value="1" dataType="string" />
+      <Parameter name="param_outstanding_unit" value="transaction" dataType="string" />
+      <Parameter name="param_data_width" value="32" dataType="string" />
+      <Parameter name="param_data_width_unit" value="bit" dataType="string" />
+      <Parameter name="abstraction_level" value="gate" dataType="string" />
+      <Parameter name="synthesis_source" value="build/synth/cpu_mac/mobile_cpu_synth.json" dataType="string" />
+      <Parameter name="synthesis_metrics" value="build/synth/cpu_mac/mobile_cpu_synth_metrics.json" dataType="string" />
+      <Parameter name="synthesis_workload" value="cpu_mac" dataType="string" />
+      <Parameter name="synthesis_cell_count" value="194" dataType="integer" />
+      <Parameter name="synthesis_comb_cells" value="88" dataType="integer" />
+      <Parameter name="synthesis_seq_cells" value="106" dataType="integer" />
+      <Parameter name="synthesis_latch_cells" value="0" dataType="integer" />
+      <Parameter name="synthesis_memory_cells" value="0" dataType="integer" />
+      <Parameter name="synthesis_equivalent_gates" value="512" dataType="float" />
+      <Parameter name="synthesis_dynamic_calibration" value="0.793061" dataType="float" />
+      <Parameter name="synthesis_leakage_calibration" value="0.813755" dataType="float" />
+    </ModelParameters>
+    <States units="mW" mutuallyExclusive="true">
+      <State name="RUN" when="power_mode == RUN" units="mW">
+        <StaticPower value="0.000270167" units="mW" source="VDD" sink="VSS">
+          <Expression>0.000270167 * leakage_voltage_scale * leakage_temperature_scale</Expression>
+        </StaticPower>
+      </State>
+      <State name="IDLE" when="power_mode == IDLE" units="mW">
+        <StaticPower value="0.000221537" units="mW" source="VDD" sink="VSS">
+          <Expression>0.000221537 * leakage_voltage_scale * leakage_temperature_scale</Expression>
+        </StaticPower>
+      </State>
+      <State name="LIGHT_SLEEP" when="power_mode == LIGHT_SLEEP" units="mW">
+        <StaticPower value="0.000075647" units="mW" source="VDD" sink="VSS">
+          <Expression>0.000075647 * leakage_voltage_scale * leakage_temperature_scale</Expression>
+        </StaticPower>
+      </State>
+      <State name="DEEP_SLEEP" when="power_mode == DEEP_SLEEP" units="mW">
+        <StaticPower value="0.000004052" units="mW" source="VDD" sink="VSS">
+          <Expression>0.000004052 * leakage_voltage_scale * leakage_temperature_scale</Expression>
+        </StaticPower>
+      </State>
+      <State name="WAKE" when="power_mode == WAKE" units="mW">
+        <StaticPower value="0.000270167" units="mW" source="VDD" sink="VSS">
+          <Expression>0.000270167 * leakage_voltage_scale * leakage_temperature_scale</Expression>
+        </StaticPower>
+      </State>
+    </States>
+  </Cell>
+  <Cell name="data_bus_interconnect" condition="generic_7nm_nominal" datagen="estimated">
+    <Pins>
+      <Pin name="VDD" direction="pg" pinType="primaryPower" />
+      <Pin name="VSS" direction="pg" pinType="primaryGround" />
+      <Pin name="clk" direction="input" dataType="bit" pinType="clock" relatedPower="VDD" relatedGround="VSS" />
+      <Pin name="activity" direction="input" dataType="bit" pinType="signal" relatedPower="VDD" relatedGround="VSS" />
+      <Pin name="power_mode" width="[2:0]" direction="input" dataType="integer" pinType="signal" relatedPower="VDD" relatedGround="VSS" />
+      <Pin name="dvfs_level" width="[1:0]" direction="input" dataType="integer" pinType="signal" relatedPower="VDD" relatedGround="VSS" />
+      <Pin name="domain_on" direction="input" dataType="bit" pinType="signal" relatedPower="VDD" relatedGround="VSS" />
+    </Pins>
+    <Modes mutuallyExclusive="true" defaultMode="RUN" initialMode="RUN">
+      <Mode name="RUN" when="power_mode == RUN" value="0">
+        <Expression>mode_is_run &amp;&amp; clock_enabled &amp;&amp; supply_VDD_MEM</Expression>
+      </Mode>
+      <Mode name="IDLE" when="power_mode == IDLE" value="1">
+        <Expression>mode_is_idle &amp;&amp; clock_gated &amp;&amp; supply_VDD_MEM</Expression>
+      </Mode>
+      <Mode name="LIGHT_SLEEP" when="power_mode == LIGHT_SLEEP" value="2">
+        <Expression>mode_is_light_sleep &amp;&amp; clock_gated &amp;&amp; supply_VDD_MEM</Expression>
+      </Mode>
+      <Mode name="DEEP_SLEEP" when="power_mode == DEEP_SLEEP" value="3">
+        <Expression>mode_is_deep_sleep &amp;&amp; clock_gated &amp;&amp; supply_off</Expression>
+      </Mode>
+      <Mode name="WAKE" when="power_mode == WAKE" value="4">
+        <Expression>mode_is_wake &amp;&amp; clock_enabled &amp;&amp; supply_VDD_MEM</Expression>
+      </Mode>
+    </Modes>
+    <Events>
+      <Event name="clock_cycle" mode="RUN" style="pinTransition" when="mem_clock_enabled &amp;&amp; domain_on" inputPin="clk" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.072" />
+      </Event>
+      <Event name="address_decode" mode="RUN" style="pinTransition" when="dbus_req_valid &amp;&amp; dbus_req_ready &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.0096" />
+      </Event>
+      <Event name="sram_route" mode="RUN" style="pinTransition" when="dbus_to_sram &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.00288" />
+      </Event>
+      <Event name="mmio_route" mode="RUN" style="pinTransition" when="dbus_to_dataflow &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.00288" />
+      </Event>
+      <Event name="error_route" mode="RUN" style="pinTransition" when="dbus_unmapped &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.0024" />
+      </Event>
+      <Event name="rtl_toggle" mode="RUN" style="pinTransition" when="vcd_activity &amp;&amp; domain_on &amp;&amp; block == data_bus_interconnect" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.00008" />
+      </Event>
+    </Events>
+    <ModelParameters>
+      <Parameter name="module" value="data_bus_interconnect" dataType="string" />
+      <Parameter name="rtl_path" value="TOP.mobile_cpu_power_top.u_dut.u_dbus" dataType="string" />
+      <Parameter name="power_domain" value="PD_MEM" dataType="string" />
+      <Parameter name="clock_name" value="mem" dataType="string" />
+      <Parameter name="model_class" value="synthesis_calibrated_macro" dataType="string" />
+      <Parameter name="logic_gates" value="170" dataType="integer" />
+      <Parameter name="flop_bits" value="80" dataType="integer" />
+      <Parameter name="sram_bits" value="0" dataType="integer" />
+      <Parameter name="toggle_energy_pj" value="0.00008" dataType="float" />
+      <Parameter name="reference_voltage_v" value="0.8" dataType="float" />
+      <Parameter name="dynamic_voltage_exponent" value="2" dataType="float" />
+      <Parameter name="leakage_voltage_exponent" value="1.2" dataType="float" />
+      <Parameter name="param_masters" value="1" dataType="string" />
+      <Parameter name="param_masters_unit" value="count" dataType="string" />
+      <Parameter name="param_slaves" value="2" dataType="string" />
+      <Parameter name="param_slaves_unit" value="count" dataType="string" />
+      <Parameter name="abstraction_level" value="gate" dataType="string" />
+      <Parameter name="synthesis_source" value="build/synth/cpu_mac/mobile_cpu_synth.json" dataType="string" />
+      <Parameter name="synthesis_metrics" value="build/synth/cpu_mac/mobile_cpu_synth_metrics.json" dataType="string" />
+      <Parameter name="synthesis_workload" value="cpu_mac" dataType="string" />
+      <Parameter name="synthesis_cell_count" value="0" dataType="integer" />
+      <Parameter name="synthesis_comb_cells" value="0" dataType="integer" />
+      <Parameter name="synthesis_seq_cells" value="0" dataType="integer" />
+      <Parameter name="synthesis_latch_cells" value="0" dataType="integer" />
+      <Parameter name="synthesis_memory_cells" value="0" dataType="integer" />
+      <Parameter name="synthesis_equivalent_gates" value="0" dataType="float" />
+      <Parameter name="synthesis_dynamic_calibration" value="1" dataType="float" />
+      <Parameter name="synthesis_leakage_calibration" value="1" dataType="float" />
+    </ModelParameters>
+    <States units="mW" mutuallyExclusive="true">
+      <State name="RUN" when="power_mode == RUN" units="mW">
+        <StaticPower value="0.000256" units="mW" source="VDD" sink="VSS">
+          <Expression>0.000256 * leakage_voltage_scale * leakage_temperature_scale</Expression>
+        </StaticPower>
+      </State>
+      <State name="IDLE" when="power_mode == IDLE" units="mW">
+        <StaticPower value="0.00020992" units="mW" source="VDD" sink="VSS">
+          <Expression>0.00020992 * leakage_voltage_scale * leakage_temperature_scale</Expression>
+        </StaticPower>
+      </State>
+      <State name="LIGHT_SLEEP" when="power_mode == LIGHT_SLEEP" units="mW">
+        <StaticPower value="0.00007168" units="mW" source="VDD" sink="VSS">
+          <Expression>0.00007168 * leakage_voltage_scale * leakage_temperature_scale</Expression>
+        </StaticPower>
+      </State>
+      <State name="DEEP_SLEEP" when="power_mode == DEEP_SLEEP" units="mW">
+        <StaticPower value="0.00000384" units="mW" source="VDD" sink="VSS">
+          <Expression>0.00000384 * leakage_voltage_scale * leakage_temperature_scale</Expression>
+        </StaticPower>
+      </State>
+      <State name="WAKE" when="power_mode == WAKE" units="mW">
+        <StaticPower value="0.000256" units="mW" source="VDD" sink="VSS">
+          <Expression>0.000256 * leakage_voltage_scale * leakage_temperature_scale</Expression>
         </StaticPower>
       </State>
     </States>
@@ -595,9 +844,9 @@
       <Parameter name="param_width" value="32" dataType="string" />
       <Parameter name="param_width_unit" value="bit" dataType="string" />
       <Parameter name="abstraction_level" value="gate" dataType="string" />
-      <Parameter name="synthesis_source" value="build/synth/memory_burst/mobile_cpu_synth.json" dataType="string" />
-      <Parameter name="synthesis_metrics" value="build/synth/memory_burst/mobile_cpu_synth_metrics.json" dataType="string" />
-      <Parameter name="synthesis_workload" value="memory_burst" dataType="string" />
+      <Parameter name="synthesis_source" value="build/synth/cpu_mac/mobile_cpu_synth.json" dataType="string" />
+      <Parameter name="synthesis_metrics" value="build/synth/cpu_mac/mobile_cpu_synth_metrics.json" dataType="string" />
+      <Parameter name="synthesis_workload" value="cpu_mac" dataType="string" />
       <Parameter name="synthesis_cell_count" value="25152" dataType="integer" />
       <Parameter name="synthesis_comb_cells" value="16928" dataType="integer" />
       <Parameter name="synthesis_seq_cells" value="8224" dataType="integer" />
@@ -669,7 +918,13 @@
       <Event name="operand_write" mode="RUN" style="pinTransition" when="mmio_write_operand &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
         <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.0084" />
       </Event>
-      <Event name="mac_accumulate" mode="RUN" style="pinTransition" when="mmio_command_start &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+      <Event name="repeat_count_write" mode="RUN" style="pinTransition" when="mmio_write_repeat_count &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.00216" />
+      </Event>
+      <Event name="command_write" mode="RUN" style="pinTransition" when="mmio_write_command &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.0024" />
+      </Event>
+      <Event name="mac_accumulate" mode="RUN" style="pinTransition" when="dataflow_op_valid &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
         <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.192" />
       </Event>
       <Event name="accumulator_clear" mode="RUN" style="pinTransition" when="mmio_command_clear &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
@@ -680,6 +935,27 @@
       </Event>
       <Event name="result_read" mode="RUN" style="pinTransition" when="mmio_read_result &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
         <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.0216" />
+      </Event>
+      <Event name="busy_cycle" mode="RUN" style="pinTransition" when="dataflow_busy &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.000045" />
+      </Event>
+      <Event name="idle_cycle" mode="RUN" style="pinTransition" when="!dataflow_busy &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.000015" />
+      </Event>
+      <Event name="mac_active_cycle" mode="RUN" style="pinTransition" when="dataflow_op_valid &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.000045" />
+      </Event>
+      <Event name="ctrl_ce_cycle" mode="RUN" style="pinTransition" when="dataflow_ctrl_ce &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.00003" />
+      </Event>
+      <Event name="mac_ce_cycle" mode="RUN" style="pinTransition" when="dataflow_mac_ce &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.00003" />
+      </Event>
+      <Event name="done_cycle" mode="RUN" style="pinTransition" when="dataflow_done &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.000015" />
+      </Event>
+      <Event name="done_assert" mode="RUN" style="pinTransition" when="$rose(dataflow_done) &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+        <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.00003" />
       </Event>
       <Event name="rtl_toggle" mode="RUN" style="pinTransition" when="vcd_activity &amp;&amp; domain_on &amp;&amp; block == dataflow_unit" inputPin="activity" inputTransition="rising">
         <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.00008" />
@@ -703,9 +979,9 @@
       <Parameter name="param_accumulator_width" value="32" dataType="string" />
       <Parameter name="param_accumulator_width_unit" value="bit" dataType="string" />
       <Parameter name="abstraction_level" value="gate" dataType="string" />
-      <Parameter name="synthesis_source" value="build/synth/memory_burst/mobile_cpu_synth.json" dataType="string" />
-      <Parameter name="synthesis_metrics" value="build/synth/memory_burst/mobile_cpu_synth_metrics.json" dataType="string" />
-      <Parameter name="synthesis_workload" value="memory_burst" dataType="string" />
+      <Parameter name="synthesis_source" value="build/synth/cpu_mac/mobile_cpu_synth.json" dataType="string" />
+      <Parameter name="synthesis_metrics" value="build/synth/cpu_mac/mobile_cpu_synth_metrics.json" dataType="string" />
+      <Parameter name="synthesis_workload" value="cpu_mac" dataType="string" />
       <Parameter name="synthesis_cell_count" value="0" dataType="integer" />
       <Parameter name="synthesis_comb_cells" value="0" dataType="integer" />
       <Parameter name="synthesis_seq_cells" value="0" dataType="integer" />
@@ -797,9 +1073,9 @@
       <Parameter name="param_modes" value="5" dataType="string" />
       <Parameter name="param_modes_unit" value="count" dataType="string" />
       <Parameter name="abstraction_level" value="gate" dataType="string" />
-      <Parameter name="synthesis_source" value="build/synth/memory_burst/mobile_cpu_synth.json" dataType="string" />
-      <Parameter name="synthesis_metrics" value="build/synth/memory_burst/mobile_cpu_synth_metrics.json" dataType="string" />
-      <Parameter name="synthesis_workload" value="memory_burst" dataType="string" />
+      <Parameter name="synthesis_source" value="build/synth/cpu_mac/mobile_cpu_synth.json" dataType="string" />
+      <Parameter name="synthesis_metrics" value="build/synth/cpu_mac/mobile_cpu_synth_metrics.json" dataType="string" />
+      <Parameter name="synthesis_workload" value="cpu_mac" dataType="string" />
       <Parameter name="synthesis_cell_count" value="30" dataType="integer" />
       <Parameter name="synthesis_comb_cells" value="27" dataType="integer" />
       <Parameter name="synthesis_seq_cells" value="3" dataType="integer" />

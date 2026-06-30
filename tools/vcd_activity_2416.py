@@ -124,6 +124,8 @@ class VcdActivityExtractor:
         self.block_toggles: dict[str, int] = defaultdict(int)
         self.mode_transitions: dict[str, int] = defaultdict(int)
         self.state_timeline: list[dict] = []
+        self.lsu_latency_counter: int | None = None
+        self.lsu_latencies: list[int] = []
 
     def extract(self) -> dict:
         header_done = False
@@ -234,6 +236,7 @@ class VcdActivityExtractor:
             "core_clk": self._code(f"{DUT}.core_clk"),
             "mem_clk": self._code(f"{DUT}.mem_clk"),
             "power_mode": self._code(f"{DUT}.power_mode"),
+            "dataflow_done": self._code(f"{DUT}.u_dataflow.done_q"),
         }
         old_values = {name: self.values.get(code) for name, code in watched_codes.items() if code}
 
@@ -252,7 +255,7 @@ class VcdActivityExtractor:
         if self._posedge(old_values.get("core_clk"), self._value(f"{DUT}.core_clk")):
             self._sample_core_edge()
         if self._posedge(old_values.get("mem_clk"), self._value(f"{DUT}.mem_clk")):
-            self._sample_mem_edge()
+            self._sample_mem_edge(old_values)
 
     def _posedge(self, old_value: str | None, new_value: str | None) -> bool:
         return bit_value(old_value) == 0 and bit_value(new_value) == 1
@@ -287,17 +290,25 @@ class VcdActivityExtractor:
         self.clock_cycles["top"] += 1
         self.clock_cycles_by_dvfs["top"][self._dvfs()] += 1
 
-    def _sample_mem_edge(self) -> None:
+    def _sample_mem_edge(self, old_values: dict[str, str | None]) -> None:
         if not self._reset_released():
             return
         if bit_value(self._value(f"{DUT}.mem_power_gate_n")) == 0:
             return
         self.clock_cycles["mem"] += 1
         self.clock_cycles_by_dvfs["mem"][self._dvfs()] += 1
-        if bit_value(self._value(f"{DUT}.bus_req_valid")) and bit_value(self._value(f"{DUT}.bus_req_ready")):
+        if self.lsu_latency_counter is not None:
+            self.lsu_latency_counter += 1
+        request_accepted = bit_value(self._value(f"{DUT}.bus_req_valid")) and bit_value(self._value(f"{DUT}.bus_req_ready"))
+        response_valid = bit_value(self._value(f"{DUT}.bus_resp_valid"))
+        if request_accepted:
             self._sample_data_bus_request()
-        if bit_value(self._value(f"{DUT}.bus_resp_valid")):
+            self.lsu_latency_counter = 0
+        if response_valid:
             self._add_event("load_store_unit", "response_complete")
+            if self.lsu_latency_counter is not None:
+                self.lsu_latencies.append(self.lsu_latency_counter)
+            self.lsu_latency_counter = None
             if bit_value(self._value(f"{DUT}.bus_resp_error")):
                 self._add_event("load_store_unit", "error_response")
         if bit_value(self._value(f"{DUT}.dataflow_op_valid")):
@@ -312,6 +323,10 @@ class VcdActivityExtractor:
             self._add_event("dataflow_unit", "ctrl_ce_cycle")
         if bit_value(self._value(f"{DUT}.dataflow_mac_ce")):
             self._add_event("dataflow_unit", "mac_ce_cycle")
+        if bit_value(self._value(f"{DUT}.u_dataflow.done_q")):
+            self._add_event("dataflow_unit", "done_cycle")
+        if bit_value(old_values.get("dataflow_done")) == 0 and bit_value(self._value(f"{DUT}.u_dataflow.done_q")):
+            self._add_event("dataflow_unit", "done_assert")
 
     def _sample_core_edge(self) -> None:
         if not self._reset_released():
@@ -449,6 +464,7 @@ class VcdActivityExtractor:
             "block_toggles": dict(sorted(self.block_toggles.items())),
             "mode_transitions": dict(sorted(self.mode_transitions.items())),
             "state_timeline": self.state_timeline,
+            "lsu_latency_cycles": self.lsu_latencies,
         }
 
 

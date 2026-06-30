@@ -131,10 +131,10 @@
       <Event name="clock_cycle" mode="RUN" style="pinTransition" when="mem_clock_enabled &amp;&amp; domain_on" inputPin="clk" inputTransition="rising">
         <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="0.01" />
       </Event>
-      <Event name="read" mode="RUN" style="pinTransition" when="mem_req &amp;&amp; !mem_we &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+      <Event name="read" mode="RUN" style="pinTransition" when="sram_req &amp;&amp; !sram_we &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
         <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="4.8" />
       </Event>
-      <Event name="write" mode="RUN" style="pinTransition" when="mem_req &amp;&amp; mem_we &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
+      <Event name="write" mode="RUN" style="pinTransition" when="sram_req &amp;&amp; sram_we &amp;&amp; domain_on" inputPin="activity" inputTransition="rising">
         <EnergyContributor name="custom" type="float" quantity="1" capacitance="0" value="6.3" />
       </Event>
     </Events>

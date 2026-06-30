@@ -234,6 +234,8 @@ BLOCKS: tuple[BlockSpec, ...] = (
             EventSpec("mac_active_cycle", "dataflow_op_valid", "MAC datapath is active for one cycle.", op_energy(1, 0.03)),
             EventSpec("ctrl_ce_cycle", "dataflow_ctrl_ce", "Dataflow control clock-enable is active.", op_energy(1, 0.02)),
             EventSpec("mac_ce_cycle", "dataflow_mac_ce", "Dataflow MAC datapath clock-enable is active.", op_energy(1, 0.02)),
+            EventSpec("done_cycle", "dataflow_done", "Dataflow done status is observable.", op_energy(1, 0.01)),
+            EventSpec("done_assert", "$rose(dataflow_done)", "Dataflow done status asserts after work completes.", op_energy(1, 0.02)),
         ),
         toggle_bits=128,
     ),

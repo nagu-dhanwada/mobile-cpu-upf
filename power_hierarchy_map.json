@@ -1,0 +1,611 @@
+{
+  "fetch_unit": {
+    "rtl_hierarchy": "cpu_top.u_fetch",
+    "parent_hierarchy": "cpu_top",
+    "architectural_block": "fetch",
+    "category": "front_end",
+    "likely_control_signal_or_fsm": "fetch_ce / stall_fetch / branch_taken",
+    "designer_hint": "Fetch-stage event; inspect PC update, branch redirect, and stall hold behavior.",
+    "related_hierarchies": [
+      "cpu_top.u_instr_rom",
+      "cpu_top.u_decode",
+      "cpu_top.u_lsu"
+    ],
+    "suggested_metrics": [
+      "fetch_ce_cycles",
+      "pc_update_during_stall_cycles"
+    ],
+    "likely_fix_pattern": "Gate fetch progress when no instruction can retire, preserving branch redirect priority."
+  },
+  "instr_rom": {
+    "rtl_hierarchy": "cpu_top.u_instr_rom",
+    "parent_hierarchy": "cpu_top",
+    "architectural_block": "instruction memory",
+    "category": "front_end",
+    "likely_control_signal_or_fsm": "instr_rom_en / fetch_ce / instr_addr",
+    "designer_hint": "Instruction ROM event; inspect read-enable and address hold behavior.",
+    "related_hierarchies": [
+      "cpu_top.u_fetch"
+    ],
+    "suggested_metrics": [
+      "instr_rom_read_during_stall_cycles"
+    ],
+    "likely_fix_pattern": "Separate ROM read enable from PC/address hold during stalls."
+  },
+  "decode_unit": {
+    "rtl_hierarchy": "cpu_top.u_decode",
+    "parent_hierarchy": "cpu_top",
+    "architectural_block": "decode",
+    "category": "front_end",
+    "likely_control_signal_or_fsm": "decode_ce / decode_valid / stall_decode",
+    "designer_hint": "Decode-stage event; inspect control decode holds during stalls.",
+    "related_hierarchies": [
+      "cpu_top.u_fetch",
+      "cpu_top.u_execute"
+    ],
+    "suggested_metrics": [
+      "decode_ce_cycles",
+      "decode_active_during_stall_cycles"
+    ],
+    "likely_fix_pattern": "Hold decode controls during non-progress stalls."
+  },
+  "execute_unit": {
+    "rtl_hierarchy": "cpu_top.u_execute",
+    "parent_hierarchy": "cpu_top",
+    "architectural_block": "execute",
+    "category": "execute",
+    "likely_control_signal_or_fsm": "execute_ce / execute_valid / opcode control",
+    "designer_hint": "Execute-stage event; inspect ALU, branch, WFI, and LSU request generation.",
+    "related_hierarchies": [
+      "cpu_top.u_decode",
+      "cpu_top.u_lsu",
+      "cpu_top.u_regfile"
+    ],
+    "suggested_metrics": [
+      "execute_ce_cycles",
+      "execute_active_during_stall_cycles"
+    ],
+    "likely_fix_pattern": "Gate execute control and operands when held by LSU backpressure."
+  },
+  "regfile": {
+    "rtl_hierarchy": "cpu_top.u_regfile",
+    "parent_hierarchy": "cpu_top",
+    "architectural_block": "register file",
+    "category": "state_access",
+    "likely_control_signal_or_fsm": "rs_read / wb_en / load_wb_en",
+    "designer_hint": "Register-file event; inspect unnecessary reads and load writeback timing.",
+    "related_hierarchies": [
+      "cpu_top.u_decode",
+      "cpu_top.u_execute",
+      "cpu_top.u_lsu"
+    ],
+    "suggested_metrics": [
+      "regfile_reads_per_instruction",
+      "regfile_writeback_count"
+    ],
+    "likely_fix_pattern": "Avoid register-file access when an instruction is held or squashed."
+  },
+  "load_store_unit": {
+    "rtl_hierarchy": "cpu_top.u_lsu",
+    "parent_hierarchy": "cpu_top",
+    "architectural_block": "LSU",
+    "category": "memory",
+    "likely_control_signal_or_fsm": "state_q / bus_req_valid / bus_resp_valid / stall",
+    "designer_hint": "LSU event; inspect request, response, and stall propagation.",
+    "related_hierarchies": [
+      "cpu_top.u_data_bus_interconnect",
+      "cpu_top.u_fetch",
+      "cpu_top.u_decode"
+    ],
+    "suggested_metrics": [
+      "average_lsu_latency",
+      "duplicate_lsu_request_count"
+    ],
+    "likely_fix_pattern": "Keep one request per memory instruction and freeze front-end state while waiting."
+  },
+  "data_bus_interconnect": {
+    "rtl_hierarchy": "cpu_top.u_data_bus_interconnect",
+    "parent_hierarchy": "cpu_top",
+    "architectural_block": "data bus interconnect",
+    "category": "bus",
+    "likely_control_signal_or_fsm": "req_valid / req_ready / selected_slave",
+    "designer_hint": "Data bus event; inspect address decode and selected slave behavior.",
+    "related_hierarchies": [
+      "cpu_top.u_lsu",
+      "cpu_top.u_data_sram",
+      "cpu_top.u_dataflow"
+    ],
+    "suggested_metrics": [
+      "bus_transactions",
+      "address_decode_during_stall_cycles"
+    ],
+    "likely_fix_pattern": "Only decode and route when a request handshake is active."
+  },
+  "data_sram": {
+    "rtl_hierarchy": "cpu_top.u_data_sram",
+    "parent_hierarchy": "cpu_top",
+    "architectural_block": "data SRAM",
+    "category": "memory_array",
+    "likely_control_signal_or_fsm": "sram_req_valid / sram_we / sram_resp_valid",
+    "designer_hint": "Data SRAM event; inspect load/store mix and memory-side clock enable.",
+    "related_hierarchies": [
+      "cpu_top.u_lsu",
+      "cpu_top.u_data_bus_interconnect"
+    ],
+    "suggested_metrics": [
+      "sram_loads",
+      "sram_stores",
+      "sram_latency_cycles"
+    ],
+    "likely_fix_pattern": "Keep SRAM access enabled only for accepted memory transactions."
+  },
+  "dataflow_unit": {
+    "rtl_hierarchy": "cpu_top.u_dataflow",
+    "parent_hierarchy": "cpu_top",
+    "architectural_block": "dataflow accelerator",
+    "category": "accelerator",
+    "likely_control_signal_or_fsm": "req_valid / command_write_pulse / busy_q / op_valid_q",
+    "designer_hint": "Dataflow event; inspect MMIO control overhead versus useful MAC activity.",
+    "related_hierarchies": [
+      "cpu_top.u_lsu",
+      "cpu_top.u_data_bus_interconnect"
+    ],
+    "suggested_metrics": [
+      "mmio_transactions_per_mac",
+      "dataflow_utilization",
+      "dataflow_mac_ce_cycles"
+    ],
+    "likely_fix_pattern": "Amortize MMIO control and split control/datapath clock enables."
+  },
+  "power_controller": {
+    "rtl_hierarchy": "cpu_top.u_power_controller",
+    "parent_hierarchy": "cpu_top",
+    "architectural_block": "power controller",
+    "category": "power_state",
+    "likely_control_signal_or_fsm": "power_mode / core_clk_en / mem_clk_en / wake_irq",
+    "designer_hint": "Power-controller event; inspect state residency and recovery overhead.",
+    "related_hierarchies": [
+      "cpu_top.u_core_clk_gate",
+      "cpu_top.u_mem_clk_gate",
+      "PD_CPU",
+      "PD_MEM"
+    ],
+    "suggested_metrics": [
+      "state_residency_percent",
+      "recovery_energy_percent"
+    ],
+    "likely_fix_pattern": "Choose deeper idle states only when residency amortizes recovery energy."
+  },
+  "load_store_unit.stall_cycle": {
+    "rtl_hierarchy": "cpu_top.u_lsu",
+    "parent_hierarchy": "cpu_top",
+    "architectural_block": "LSU",
+    "category": "stall",
+    "likely_control_signal_or_fsm": "state_q / LSU_WAIT_ACCEPT / LSU_WAIT_RESP / stall_fetch / stall_decode",
+    "designer_hint": "Check the LSU outstanding transaction state machine and pipeline stall propagation.",
+    "related_hierarchies": [
+      "cpu_top.u_fetch",
+      "cpu_top.u_decode",
+      "cpu_top.u_execute",
+      "cpu_top.u_data_bus_interconnect"
+    ],
+    "suggested_metrics": [
+      "stall_cycles_by_reason",
+      "fetch_active_during_stall_cycles",
+      "decode_active_during_stall_cycles",
+      "duplicate_lsu_request_count"
+    ],
+    "likely_fix_pattern": "Freeze front-end stages during LSU wait and prevent duplicate request issue."
+  },
+  "load_store_unit.request_issue": {
+    "rtl_hierarchy": "cpu_top.u_lsu",
+    "parent_hierarchy": "cpu_top",
+    "architectural_block": "LSU",
+    "category": "memory_request",
+    "likely_control_signal_or_fsm": "bus_req_valid / bus_req_ready / state_q / request_accepted",
+    "designer_hint": "Check that one architectural load/store issues one data-side request.",
+    "related_hierarchies": [
+      "cpu_top.u_data_bus_interconnect"
+    ],
+    "suggested_metrics": [
+      "duplicate_lsu_request_count",
+      "lsu_request_count",
+      "lsu_response_count"
+    ],
+    "likely_fix_pattern": "Use a single-outstanding FSM with an explicit accepted-request state."
+  },
+  "load_store_unit.response_complete": {
+    "rtl_hierarchy": "cpu_top.u_lsu",
+    "parent_hierarchy": "cpu_top",
+    "architectural_block": "LSU",
+    "category": "memory_response",
+    "likely_control_signal_or_fsm": "bus_resp_valid / load_wb_en / state_q / LSU_DONE",
+    "designer_hint": "Check load writeback and store retirement only occur after response completion.",
+    "related_hierarchies": [
+      "cpu_top.u_regfile",
+      "cpu_top.u_execute",
+      "cpu_top.u_data_bus_interconnect"
+    ],
+    "suggested_metrics": [
+      "average_lsu_latency",
+      "max_lsu_latency",
+      "load_writeback_on_resp_count"
+    ],
+    "likely_fix_pattern": "Retire the held memory instruction only when response_valid is asserted."
+  },
+  "fetch_unit.pc_update": {
+    "rtl_hierarchy": "cpu_top.u_fetch",
+    "parent_hierarchy": "cpu_top",
+    "architectural_block": "fetch",
+    "category": "front_end_activity",
+    "likely_control_signal_or_fsm": "pc_enable / fetch_ce / stall_fetch / branch_taken",
+    "designer_hint": "Check PC enable during stalls and branch redirect priority.",
+    "related_hierarchies": [
+      "cpu_top.u_decode",
+      "cpu_top.u_lsu",
+      "cpu_top.u_instr_rom"
+    ],
+    "suggested_metrics": [
+      "pc_update_during_stall_cycles",
+      "fetch_ce_cycles",
+      "front_end_active_during_stall_ratio"
+    ],
+    "likely_fix_pattern": "Gate PC update during non-progress stalls while preserving branch redirect priority."
+  },
+  "fetch_unit.fetch_ce_cycle": {
+    "rtl_hierarchy": "cpu_top.u_fetch",
+    "parent_hierarchy": "cpu_top",
+    "architectural_block": "fetch",
+    "category": "clock_enable",
+    "likely_control_signal_or_fsm": "fetch_ce / stall_fetch / fetch_valid",
+    "designer_hint": "Check whether fetch clock enable drops during LSU wait states.",
+    "related_hierarchies": [
+      "cpu_top.u_decode",
+      "cpu_top.u_instr_rom",
+      "cpu_top.u_lsu"
+    ],
+    "suggested_metrics": [
+      "fetch_active_during_stall_cycles",
+      "fetch_clock_enable_efficiency"
+    ],
+    "likely_fix_pattern": "Drive fetch_ce from valid progress, not only from the parent core clock."
+  },
+  "fetch_unit.stall_valid_cycle": {
+    "rtl_hierarchy": "cpu_top.u_fetch",
+    "parent_hierarchy": "cpu_top",
+    "architectural_block": "fetch",
+    "category": "front_end_stall",
+    "likely_control_signal_or_fsm": "fetch_valid / stall_fetch / fetch_ce",
+    "designer_hint": "Valid fetch work is present while progress is blocked by a stall.",
+    "related_hierarchies": [
+      "cpu_top.u_lsu",
+      "cpu_top.u_instr_rom",
+      "cpu_top.u_decode"
+    ],
+    "suggested_metrics": [
+      "pc_update_during_stall_cycles",
+      "instr_rom_read_during_stall_cycles"
+    ],
+    "likely_fix_pattern": "Hold PC and fetch-stage state during LSU wait states."
+  },
+  "decode_unit.decode_instruction": {
+    "rtl_hierarchy": "cpu_top.u_decode",
+    "parent_hierarchy": "cpu_top",
+    "architectural_block": "decode",
+    "category": "front_end_activity",
+    "likely_control_signal_or_fsm": "decode_ce / decode_valid / stall_decode / flush_decode",
+    "designer_hint": "Check decode register enable and decode control hold during stalls.",
+    "related_hierarchies": [
+      "cpu_top.u_fetch",
+      "cpu_top.u_execute",
+      "cpu_top.u_lsu"
+    ],
+    "suggested_metrics": [
+      "decode_active_during_stall_cycles",
+      "decode_ce_cycles"
+    ],
+    "likely_fix_pattern": "Hold decode controls during stall and preserve flush priority."
+  },
+  "decode_unit.stall_valid_cycle": {
+    "rtl_hierarchy": "cpu_top.u_decode",
+    "parent_hierarchy": "cpu_top",
+    "architectural_block": "decode",
+    "category": "front_end_stall",
+    "likely_control_signal_or_fsm": "decode_valid / stall_decode / decode_ce",
+    "designer_hint": "Decode contains valid work while no instruction can retire.",
+    "related_hierarchies": [
+      "cpu_top.u_fetch",
+      "cpu_top.u_execute",
+      "cpu_top.u_lsu"
+    ],
+    "suggested_metrics": [
+      "decode_active_during_stall_cycles",
+      "decode_clock_enable_efficiency"
+    ],
+    "likely_fix_pattern": "Disable decode register updates during LSU wait states."
+  },
+  "execute_unit.stall_valid_cycle": {
+    "rtl_hierarchy": "cpu_top.u_execute",
+    "parent_hierarchy": "cpu_top",
+    "architectural_block": "execute",
+    "category": "front_end_stall",
+    "likely_control_signal_or_fsm": "execute_valid / stall_execute / execute_ce",
+    "designer_hint": "Execute contains valid work while the LSU is draining a request.",
+    "related_hierarchies": [
+      "cpu_top.u_decode",
+      "cpu_top.u_lsu",
+      "cpu_top.u_regfile"
+    ],
+    "suggested_metrics": [
+      "execute_active_during_stall_cycles",
+      "execute_clock_enable_efficiency"
+    ],
+    "likely_fix_pattern": "Disable execute operand/control updates during LSU wait states."
+  },
+  "instr_rom.instruction_fetch": {
+    "rtl_hierarchy": "cpu_top.u_instr_rom",
+    "parent_hierarchy": "cpu_top",
+    "architectural_block": "instruction memory",
+    "category": "front_end_activity",
+    "likely_control_signal_or_fsm": "instr_rom_en / fetch_ce / stall_fetch",
+    "designer_hint": "Check whether the instruction ROM is read during stalled cycles.",
+    "related_hierarchies": [
+      "cpu_top.u_fetch"
+    ],
+    "suggested_metrics": [
+      "instr_rom_read_during_stall_cycles",
+      "fetch_ce_cycles"
+    ],
+    "likely_fix_pattern": "Disable instruction ROM read during non-progress stall cycles."
+  },
+  "instr_rom.stall_hold_cycle": {
+    "rtl_hierarchy": "cpu_top.u_instr_rom",
+    "parent_hierarchy": "cpu_top",
+    "architectural_block": "instruction memory",
+    "category": "front_end_stall",
+    "likely_control_signal_or_fsm": "instr_rom_en / fetch_ce / stall_fetch",
+    "designer_hint": "The ROM address is held while the front end waits for the LSU.",
+    "related_hierarchies": [
+      "cpu_top.u_fetch",
+      "cpu_top.u_lsu"
+    ],
+    "suggested_metrics": [
+      "rom_read_enable_during_stall",
+      "pc_update_during_stall_cycles"
+    ],
+    "likely_fix_pattern": "Add an explicit instruction ROM read enable separate from address hold."
+  },
+  "data_bus_interconnect.address_decode": {
+    "rtl_hierarchy": "cpu_top.u_data_bus_interconnect",
+    "parent_hierarchy": "cpu_top",
+    "architectural_block": "data bus interconnect",
+    "category": "bus_activity",
+    "likely_control_signal_or_fsm": "req_valid / req_ready / addr_decode_en / selected_slave",
+    "designer_hint": "Check MMIO/SRAM transaction counts and address decode activity.",
+    "related_hierarchies": [
+      "cpu_top.u_lsu",
+      "cpu_top.u_data_sram",
+      "cpu_top.u_dataflow"
+    ],
+    "suggested_metrics": [
+      "bus_transactions",
+      "mmio_transactions",
+      "sram_transactions",
+      "address_decode_during_stall_cycles"
+    ],
+    "likely_fix_pattern": "Decode address only when a request handshake is active or transaction is accepted."
+  },
+  "data_bus_interconnect.mmio_route": {
+    "rtl_hierarchy": "cpu_top.u_data_bus_interconnect",
+    "parent_hierarchy": "cpu_top",
+    "architectural_block": "data bus interconnect",
+    "category": "mmio_activity",
+    "likely_control_signal_or_fsm": "selected_slave / dataflow_req_valid / req_addr[3:0]",
+    "designer_hint": "MMIO traffic is being routed to the dataflow control aperture.",
+    "related_hierarchies": [
+      "cpu_top.u_lsu",
+      "cpu_top.u_dataflow.u_mmio_control"
+    ],
+    "suggested_metrics": [
+      "mmio_transactions_per_mac",
+      "dataflow_command_count",
+      "status_read_count"
+    ],
+    "likely_fix_pattern": "Amortize control traffic with descriptor, repeat-count, FIFO, or doorbell semantics."
+  },
+  "data_bus_interconnect.sram_route": {
+    "rtl_hierarchy": "cpu_top.u_data_bus_interconnect",
+    "parent_hierarchy": "cpu_top",
+    "architectural_block": "data bus interconnect",
+    "category": "sram_activity",
+    "likely_control_signal_or_fsm": "selected_slave / sram_req_valid",
+    "designer_hint": "SRAM requests are routed through the tiny data-side interconnect.",
+    "related_hierarchies": [
+      "cpu_top.u_lsu",
+      "cpu_top.u_data_sram"
+    ],
+    "suggested_metrics": [
+      "sram_loads",
+      "sram_stores",
+      "sram_latency_cycles"
+    ],
+    "likely_fix_pattern": "Keep SRAM request path single-issued unless a future cache/miss path is added."
+  },
+  "dataflow_unit.mmio_access": {
+    "rtl_hierarchy": "cpu_top.u_dataflow.u_mmio_control",
+    "parent_hierarchy": "cpu_top.u_dataflow",
+    "architectural_block": "dataflow MMIO control",
+    "category": "accelerator_control",
+    "likely_control_signal_or_fsm": "mmio_write / mmio_read / command_pulse / status_read",
+    "designer_hint": "Check CPU control traffic into the dataflow block.",
+    "related_hierarchies": [
+      "cpu_top.u_lsu",
+      "cpu_top.u_data_bus_interconnect",
+      "cpu_top.u_dataflow.u_mac_datapath"
+    ],
+    "suggested_metrics": [
+      "mmio_transactions_per_mac",
+      "dataflow_command_count",
+      "cpu_setup_instructions_per_mac"
+    ],
+    "likely_fix_pattern": "Add descriptor/repeat-count mode to amortize MMIO control."
+  },
+  "dataflow_unit.operand_write": {
+    "rtl_hierarchy": "cpu_top.u_dataflow.u_mmio_control",
+    "parent_hierarchy": "cpu_top.u_dataflow",
+    "architectural_block": "dataflow MMIO control",
+    "category": "accelerator_control",
+    "likely_control_signal_or_fsm": "req_we / req_addr / operand_a_q / operand_b_q",
+    "designer_hint": "Operand writes show CPU setup traffic before useful dataflow work.",
+    "related_hierarchies": [
+      "cpu_top.u_lsu",
+      "cpu_top.u_data_bus_interconnect",
+      "cpu_top.u_dataflow.u_mac_datapath"
+    ],
+    "suggested_metrics": [
+      "operand_writes_per_mac",
+      "cpu_setup_instructions_per_mac"
+    ],
+    "likely_fix_pattern": "Use a repeat-count, FIFO, or scratchpad path so operands are not rewritten for each MAC."
+  },
+  "dataflow_unit.command_write": {
+    "rtl_hierarchy": "cpu_top.u_dataflow.u_mmio_control",
+    "parent_hierarchy": "cpu_top.u_dataflow",
+    "architectural_block": "dataflow MMIO control",
+    "category": "accelerator_control",
+    "likely_control_signal_or_fsm": "command_write_pulse / command_write_held_q / busy_q",
+    "designer_hint": "Command writes are control doorbells from the CPU.",
+    "related_hierarchies": [
+      "cpu_top.u_lsu",
+      "cpu_top.u_dataflow.u_mac_datapath"
+    ],
+    "suggested_metrics": [
+      "commands_per_mac",
+      "duplicate_command_count"
+    ],
+    "likely_fix_pattern": "Make command writes pulse-based and amortize them over multiple MAC operations."
+  },
+  "dataflow_unit.status_read": {
+    "rtl_hierarchy": "cpu_top.u_dataflow.u_mmio_control",
+    "parent_hierarchy": "cpu_top.u_dataflow",
+    "architectural_block": "dataflow MMIO control",
+    "category": "accelerator_control",
+    "likely_control_signal_or_fsm": "req_addr / status_word / done_q / busy_q",
+    "designer_hint": "Status polling can consume CPU, LSU, and bus energy.",
+    "related_hierarchies": [
+      "cpu_top.u_lsu",
+      "cpu_top.u_data_bus_interconnect"
+    ],
+    "suggested_metrics": [
+      "status_reads_per_mac",
+      "polling_cycles"
+    ],
+    "likely_fix_pattern": "Prefer done interrupts, batched polling, or descriptor completion flags for larger bursts."
+  },
+  "dataflow_unit.result_read": {
+    "rtl_hierarchy": "cpu_top.u_dataflow.u_mmio_control",
+    "parent_hierarchy": "cpu_top.u_dataflow",
+    "architectural_block": "dataflow MMIO control",
+    "category": "accelerator_control",
+    "likely_control_signal_or_fsm": "req_addr / acc_q / resp_rdata_q",
+    "designer_hint": "Result reads are required, but should be amortized over a useful burst.",
+    "related_hierarchies": [
+      "cpu_top.u_lsu",
+      "cpu_top.u_data_bus_interconnect",
+      "cpu_top.u_dataflow.u_mac_datapath"
+    ],
+    "suggested_metrics": [
+      "result_reads_per_mac",
+      "energy_per_dataflow_mac"
+    ],
+    "likely_fix_pattern": "Read results once per burst or descriptor, not once per scalar operation."
+  },
+  "dataflow_unit.mac_accumulate": {
+    "rtl_hierarchy": "cpu_top.u_dataflow.u_mac_datapath",
+    "parent_hierarchy": "cpu_top.u_dataflow",
+    "architectural_block": "dataflow MAC datapath",
+    "category": "accelerator_activity",
+    "likely_control_signal_or_fsm": "op_valid_q / busy_q / remaining_q / dataflow_mac_ce",
+    "designer_hint": "Useful accelerator work; compare this against control traffic and idle cycles.",
+    "related_hierarchies": [
+      "cpu_top.u_dataflow.u_mmio_control",
+      "cpu_top.u_lsu"
+    ],
+    "suggested_metrics": [
+      "dataflow_mac_active_cycles",
+      "dataflow_utilization",
+      "dataflow_clock_enable_efficiency"
+    ],
+    "likely_fix_pattern": "Keep MAC datapath enabled only when op_valid or local repeat work is active."
+  },
+  "dataflow_unit.mac_active_cycle": {
+    "rtl_hierarchy": "cpu_top.u_dataflow.u_mac_datapath",
+    "parent_hierarchy": "cpu_top.u_dataflow",
+    "architectural_block": "dataflow MAC datapath",
+    "category": "accelerator_activity",
+    "likely_control_signal_or_fsm": "dataflow_op_valid / dataflow_mac_ce",
+    "designer_hint": "MAC datapath is doing useful work.",
+    "related_hierarchies": [
+      "cpu_top.u_dataflow.u_mmio_control"
+    ],
+    "suggested_metrics": [
+      "dataflow_idle_cycles",
+      "dataflow_mac_ce_cycles"
+    ],
+    "likely_fix_pattern": "Use this as the useful-active numerator for datapath clock-enable efficiency."
+  },
+  "dataflow_unit.idle_cycle": {
+    "rtl_hierarchy": "cpu_top.u_dataflow.u_mac_datapath",
+    "parent_hierarchy": "cpu_top.u_dataflow",
+    "architectural_block": "dataflow MAC datapath",
+    "category": "idle_activity",
+    "likely_control_signal_or_fsm": "busy_q / dataflow_mac_ce / dataflow_ctrl_ce",
+    "designer_hint": "Dataflow is clocked while not producing MAC work.",
+    "related_hierarchies": [
+      "cpu_top.u_dataflow.u_mmio_control",
+      "cpu_top.u_lsu"
+    ],
+    "suggested_metrics": [
+      "dataflow_idle_but_clocked_cycles",
+      "dataflow_mac_clock_enable_efficiency"
+    ],
+    "likely_fix_pattern": "Split MMIO control enable from MAC datapath clock enable."
+  },
+  "dataflow_unit.done_assert": {
+    "rtl_hierarchy": "cpu_top.u_dataflow.u_mmio_control",
+    "parent_hierarchy": "cpu_top.u_dataflow",
+    "architectural_block": "dataflow MMIO control",
+    "category": "accelerator_status",
+    "likely_control_signal_or_fsm": "done_q / busy_q / remaining_q",
+    "designer_hint": "Dataflow completion status asserted.",
+    "related_hierarchies": [
+      "cpu_top.u_lsu",
+      "cpu_top.u_dataflow.u_mac_datapath"
+    ],
+    "suggested_metrics": [
+      "done_latency_cycles",
+      "status_read_count"
+    ],
+    "likely_fix_pattern": "Keep done status observable even when the MAC datapath clock enable is off."
+  },
+  "power_controller.mode_transition": {
+    "rtl_hierarchy": "cpu_top.u_power_controller",
+    "parent_hierarchy": "cpu_top",
+    "architectural_block": "power controller",
+    "category": "power_state",
+    "likely_control_signal_or_fsm": "power_mode / sleep_req / deep_sleep_req / wake_irq",
+    "designer_hint": "Check mode transition count and recovery-energy share.",
+    "related_hierarchies": [
+      "cpu_top.u_core_clk_gate",
+      "cpu_top.u_mem_clk_gate",
+      "PD_CPU",
+      "PD_MEM"
+    ],
+    "suggested_metrics": [
+      "recovery_energy_percent",
+      "mode_transition_count",
+      "state_residency_percent"
+    ],
+    "likely_fix_pattern": "Only use deeper power states when residency amortizes recovery cost."
+  }
+}

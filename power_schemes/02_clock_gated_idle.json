@@ -8,6 +8,29 @@
     "The clock-gating controls are core_clk_en and mem_clk_en in u_power_controller."
   ],
   "methodology": {
+    "implemented_rtl_features": [
+      "u_power_controller generates core_clk_en and mem_clk_en.",
+      "u_core_clk_gate gates the CPU-side clock in IDLE and LIGHT_SLEEP.",
+      "u_mem_clk_gate gates the memory-side clock in IDLE and LIGHT_SLEEP.",
+      "The LSU single-outstanding state machine stalls the front end while a request or response is outstanding.",
+      "Fetch/decode/execute observability exposes valid, stall, and clock-enable cycles for check-in metrics."
+    ],
+    "estimated_features": [
+      "Reduced dynamic activity during idle power states.",
+      "Reduced dynamic activity during WFI-driven idle residency.",
+      "Per-block dynamic savings inferred from activity counts and IEEE 2416 event models."
+    ],
+    "not_yet_implemented": [
+      "Independent dataflow MAC datapath clock gate inside dataflow_unit.",
+      "Separate dataflow power domain.",
+      "Explicit stall reason counters in RTL.",
+      "Instruction ROM read-enable gating separate from PC hold."
+    ],
+    "detected_opportunities": [
+      "front_end_active_during_stall_ratio flags fetch/decode/execute activity during LSU wait states.",
+      "dataflow_utilization flags low MAC active cycles relative to clocked idle cycles.",
+      "mmio_transactions_per_mac flags unamortized dataflow offload control traffic."
+    ],
     "gated_in_rtl": [
       "u_power_controller drives core_clk_en and mem_clk_en.",
       "u_core_clk_gate gates the CPU-side clock when the controller enters IDLE or LIGHT_SLEEP.",

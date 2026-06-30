@@ -4,7 +4,7 @@
   "format": "OpenLowPower IEEE 2416 Library",
   "model_class": "synthesis_calibrated_macro",
   "tech_config": "configs/tech/generic_7nm.json",
-  "metrics": "build/synth/memory_burst/mobile_cpu_synth_metrics.json",
+  "metrics": "build/synth/cpu_mac/mobile_cpu_synth_metrics.json",
   "xml": "power_models/mobile_cpu/ieee2416/mobile_cpu_synth_library.xml",
   "cells": [
     "fetch_unit",
@@ -12,9 +12,11 @@
     "decode_unit",
     "regfile",
     "execute_unit",
+    "load_store_unit",
+    "data_bus_interconnect",
     "data_sram",
     "dataflow_unit",
     "power_controller"
   ],
-  "cell_count": 8
+  "cell_count": 10
 }

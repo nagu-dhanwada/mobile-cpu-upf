@@ -62,6 +62,14 @@ VISUAL_STORY_WORKLOADS ?= cpu_mac dataflow_mac
 VISUAL_STORY_GENERATED ?= dataflow_energy_probe sleep_wake_probe
 VISUAL_STORY_CASES ?= cpu_mac dataflow_mac generated/dataflow_energy_probe generated/sleep_wake_probe
 VISUAL_STORY_OUT ?= reports/visual_story/index.html
+POWER_CHECK_WORKLOADS ?= $(VISUAL_STORY_CASES)
+POWER_CHECK_CONFIG ?= power_check_config.json
+POWER_HIERARCHY_MAP ?= power_hierarchy_map.json
+POWER_METRICS ?= reports/power_metrics.json
+POWER_BASELINE ?= reports/baselines/power_metrics_baseline.json
+POWER_DELTA ?= reports/power_metrics_delta.json
+POWER_CHECK_SUMMARY ?= reports/checkin_summary.md
+POWER_OPT_CARDS ?= reports/power_optimization_cards.json
 
 RTL_FILES := \
 	rtl/mobile_cpu_pkg.sv \
@@ -81,7 +89,7 @@ RTL_FILES := \
 VERILATOR_WARNINGS := -Wno-UNUSEDSIGNAL -Wno-COMBDLY
 VERILATOR_GLS_WARNINGS := $(VERILATOR_WARNINGS) -Wno-DECLFILENAME -Wno-LATCH -Wno-UNOPTFLAT
 
-.PHONY: upf explore test test-dataflow-rtl lint-rtl gen-workload assemble-generated sim-generated sim-generated-vcd profile-generated assemble-workload sim-power sim-power-vcd sim-workload sim-workload-vcd synth gls synth-mapped gls-mapped techlib-nangate45 joules-script joules-input joules-workload 2416-characterize 2416-validate 2416-power 2416-compare-workloads 2416-compare-schemes 2416-dvfs-explore 2416-synth-characterize 2416-synth-validate 2416-synth-power 2416-stdcell-models 2416-stdcell-validate 2416-memory-macros 2416-memory-macro-validate 2416-mapped-power 2416-compare-abstractions p2416-characterize p2416-validate p2416-power profile-workload compare-dataflow visual-story-data visual-story open-visual-story waves waves-workload clean
+.PHONY: upf explore test test-dataflow-rtl lint-rtl gen-workload assemble-generated sim-generated sim-generated-vcd profile-generated assemble-workload sim-power sim-power-vcd sim-workload sim-workload-vcd synth gls synth-mapped gls-mapped techlib-nangate45 joules-script joules-input joules-workload 2416-characterize 2416-validate 2416-power 2416-compare-workloads 2416-compare-schemes 2416-dvfs-explore 2416-synth-characterize 2416-synth-validate 2416-synth-power 2416-stdcell-models 2416-stdcell-validate 2416-memory-macros 2416-memory-macro-validate 2416-mapped-power 2416-compare-abstractions p2416-characterize p2416-validate p2416-power profile-workload compare-dataflow visual-story-data power-metrics power-baseline power-check power-check-ci power-report visual-story open-visual-story waves waves-workload clean
 
 upf:
 	$(PYTHON) tools/gen_upf.py --schemes power_schemes --out upf
@@ -432,11 +440,85 @@ visual-story-data:
 		$(MAKE) profile-generated GEN_WORKLOAD=$$workload TECH=$(TECH) SCHEME=$(SCHEME); \
 	done
 
-visual-story: visual-story-data
+power-metrics: visual-story-data
+	$(PYTHON) tools/power_check.py check \
+		--tech $(TECH) \
+		--scheme $(SCHEME) \
+		--report-root reports/2416 \
+		--config $(POWER_CHECK_CONFIG) \
+		--hierarchy-map $(POWER_HIERARCHY_MAP) \
+		--out $(POWER_METRICS) \
+		--cards-out $(POWER_OPT_CARDS) \
+		--baseline $(POWER_BASELINE) \
+		--delta-out $(POWER_DELTA) \
+		--summary-out $(POWER_CHECK_SUMMARY) \
+		$(foreach workload,$(POWER_CHECK_WORKLOADS),--workload $(workload))
+
+power-baseline: visual-story-data
+	$(PYTHON) tools/power_check.py baseline \
+		--tech $(TECH) \
+		--scheme $(SCHEME) \
+		--report-root reports/2416 \
+		--config $(POWER_CHECK_CONFIG) \
+		--hierarchy-map $(POWER_HIERARCHY_MAP) \
+		--out $(POWER_METRICS) \
+		--cards-out $(POWER_OPT_CARDS) \
+		--baseline-out $(POWER_BASELINE) \
+		--delta-out $(POWER_DELTA) \
+		--summary-out $(POWER_CHECK_SUMMARY) \
+		$(foreach workload,$(POWER_CHECK_WORKLOADS),--workload $(workload))
+
+power-check: visual-story-data
+	$(PYTHON) tools/power_check.py check \
+		--tech $(TECH) \
+		--scheme $(SCHEME) \
+		--report-root reports/2416 \
+		--config $(POWER_CHECK_CONFIG) \
+		--hierarchy-map $(POWER_HIERARCHY_MAP) \
+		--out $(POWER_METRICS) \
+		--cards-out $(POWER_OPT_CARDS) \
+		--baseline $(POWER_BASELINE) \
+		--delta-out $(POWER_DELTA) \
+		--summary-out $(POWER_CHECK_SUMMARY) \
+		$(foreach workload,$(POWER_CHECK_WORKLOADS),--workload $(workload))
 	$(PYTHON) tools/gen_visual_story.py \
 		--tech $(TECH) \
 		--scheme $(SCHEME) \
 		--out $(VISUAL_STORY_OUT) \
+		--metrics-in $(POWER_METRICS) \
+		--delta-in $(POWER_DELTA) \
+		--summary-in $(POWER_CHECK_SUMMARY) \
+		--cards-in $(POWER_OPT_CARDS) \
+		--cards-out reports/visual_story/power_optimization_cards.json \
+		$(foreach workload,$(VISUAL_STORY_CASES),--workload $(workload))
+
+power-check-ci: visual-story-data
+	$(PYTHON) tools/power_check.py check \
+		--fail-on-red \
+		--tech $(TECH) \
+		--scheme $(SCHEME) \
+		--report-root reports/2416 \
+		--config $(POWER_CHECK_CONFIG) \
+		--hierarchy-map $(POWER_HIERARCHY_MAP) \
+		--out $(POWER_METRICS) \
+		--cards-out $(POWER_OPT_CARDS) \
+		--baseline $(POWER_BASELINE) \
+		--delta-out $(POWER_DELTA) \
+		--summary-out $(POWER_CHECK_SUMMARY) \
+		$(foreach workload,$(POWER_CHECK_WORKLOADS),--workload $(workload))
+
+power-report: power-check
+
+visual-story: power-metrics
+	$(PYTHON) tools/gen_visual_story.py \
+		--tech $(TECH) \
+		--scheme $(SCHEME) \
+		--out $(VISUAL_STORY_OUT) \
+		--metrics-in $(POWER_METRICS) \
+		--delta-in $(POWER_DELTA) \
+		--summary-in $(POWER_CHECK_SUMMARY) \
+		--cards-in $(POWER_OPT_CARDS) \
+		--cards-out reports/visual_story/power_optimization_cards.json \
 		$(foreach workload,$(VISUAL_STORY_CASES),--workload $(workload))
 
 open-visual-story: visual-story

@@ -126,6 +126,28 @@ OpenLowPower IEEE 2416 flow, and writes a standalone animated HTML dashboard to
 `reports/visual_story/index.html`. The checked-in guide is
 `docs/mobile_cpu_visual_walkthrough.md`.
 
+Run the RTL power/performance check-in methodology:
+
+```sh
+make power-baseline TECH=generic_7nm SCHEME=clock_gated_idle
+make power-check TECH=generic_7nm SCHEME=clock_gated_idle
+```
+
+`power-baseline` captures the current workload-suite metrics under
+`reports/baselines/power_metrics_baseline.json`. `power-check` regenerates the
+same metrics, compares against the baseline, writes
+`reports/power_metrics_delta.json` and `reports/checkin_summary.md`, and updates
+the visual story with check-in summary, metric deltas, hierarchy attribution,
+designer cards, and missing instrumentation. Thresholds are configurable in
+`power_check_config.json`, and event-to-RTL attribution lives in
+`power_hierarchy_map.json`. For CI-style blocking on red regressions, run:
+
+```sh
+make power-check-ci TECH=generic_7nm SCHEME=clock_gated_idle
+```
+
+See `docs/rtl_power_checkin_methodology.md`.
+
 Generate a VCD and Cadence Joules RTL power-analysis starter script:
 
 ```sh

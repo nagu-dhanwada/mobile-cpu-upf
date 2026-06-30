@@ -9,7 +9,14 @@ make visual-story
 ```
 
 The generated dashboard is written to `reports/visual_story/index.html`. It is a
-derived artifact, so it is not checked into Git.
+derived artifact, so it is not checked into Git. The page now starts with RTL
+check-in methodology sections before the animation:
+
+- check-in summary,
+- metric deltas versus baseline,
+- hierarchy attribution,
+- designer optimization cards,
+- missing data and instrumentation requests.
 
 ## CPU Datapath
 
@@ -118,12 +125,37 @@ memory-mapped control traffic. Whether that is a win depends on how many useful
 MAC operations are done per MMIO sequence, whether repeat mode is used, and how
 much low-power recovery energy is included in the scenario.
 
+## RTL Check-In Metrics
+
+The check-in flow writes machine-readable metrics to:
+
+```text
+reports/power_metrics.json
+```
+
+The metrics are grouped by workload, domain, block, event, and RTL hierarchy.
+They include energy, average power, cycles, retired/useful instructions,
+dataflow MACs, pJ/MAC, memory intensity, WFI density, LSU stalls, MMIO/SRAM
+transactions, front-end stall activity, dataflow utilization, and clock-enable
+efficiency where available.
+
+When a baseline exists, the flow also writes:
+
+```text
+reports/power_metrics_delta.json
+reports/checkin_summary.md
+```
+
+Review these before reading optimization cards. Red/yellow deltas identify what
+changed; hierarchy attribution tells you where to inspect RTL; cards explain why
+the behavior may be wasteful and what RTL change to consider.
+
 ## Designer Optimization Cards
 
 The visual story also emits an actionable low-power review artifact:
 
 ```text
-reports/visual_story/power_optimization_cards.json
+reports/power_optimization_cards.json
 ```
 
 Each card is generated from the workload profile and IEEE 2416 activity counts.
@@ -142,12 +174,36 @@ Treat these as logic-design review prompts. A card is not a signoff result; it
 is a traceable reason to make a small RTL change, then rerun the same workload
 and compare the `before_metrics` and `after_metrics` fields.
 
+Cards are hierarchy-aware through `power_hierarchy_map.json`. Each card tries to
+name the architectural block, RTL hierarchy, related upstream/downstream
+hierarchy, likely control signal or FSM, suggested fix pattern, and verification
+tests. If a future event cannot be mapped, the metrics file reports the missing
+mapping explicitly.
+
 ## Commands
 
 Generate the default visual story data and dashboard:
 
 ```sh
 make visual-story
+```
+
+Capture a check-in baseline:
+
+```sh
+make power-baseline TECH=generic_7nm SCHEME=clock_gated_idle
+```
+
+Run an RTL check-in comparison:
+
+```sh
+make power-check TECH=generic_7nm SCHEME=clock_gated_idle
+```
+
+Run CI-style advisory gating that fails only on red regressions:
+
+```sh
+make power-check-ci TECH=generic_7nm SCHEME=clock_gated_idle
 ```
 
 Open it locally on macOS:

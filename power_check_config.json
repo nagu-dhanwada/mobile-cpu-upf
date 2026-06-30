@@ -1,0 +1,72 @@
+{
+  "regression_thresholds": {
+    "total_energy_pj": {
+      "yellow_percent": 10.0,
+      "red_percent": 20.0
+    },
+    "pJ_per_useful_instruction": {
+      "yellow_percent": 10.0,
+      "red_percent": 20.0
+    },
+    "pJ_per_dataflow_mac": {
+      "yellow_percent": 10.0,
+      "red_percent": 20.0
+    },
+    "total_stall_cycles": {
+      "yellow_percent": 15.0,
+      "red_percent": 30.0
+    },
+    "stall_cycles_percent": {
+      "yellow_percent": 15.0,
+      "red_percent": 30.0
+    },
+    "mmio_transactions": {
+      "yellow_percent": 15.0,
+      "red_percent": 30.0
+    },
+    "front_end_active_during_stall_ratio": {
+      "yellow_percent": 15.0,
+      "red_percent": 30.0
+    },
+    "recovery_energy_percent": {
+      "yellow_percent": 10.0,
+      "red_percent": 20.0
+    }
+  },
+  "absolute_thresholds": {
+    "mmio_transactions_per_mac": {
+      "yellow_above": 3.0,
+      "red_above": 5.0
+    },
+    "front_end_active_during_stall_ratio": {
+      "yellow_above": 0.25,
+      "red_above": 0.50
+    },
+    "clock_enable_efficiency": {
+      "yellow_below": 0.40,
+      "red_below": 0.20
+    },
+    "dataflow_utilization": {
+      "yellow_below": 0.20,
+      "red_below": 0.10
+    },
+    "recovery_energy_percent": {
+      "yellow_above": 20.0,
+      "red_above": 35.0
+    },
+    "stall_cycles_percent": {
+      "yellow_above": 25.0,
+      "red_above": 50.0
+    }
+  },
+  "hierarchy_event_regression": {
+    "yellow_percent": 15.0,
+    "red_percent": 30.0
+  },
+  "default_mode": "advisory",
+  "notes": [
+    "Regression thresholds compare current metrics against a saved baseline.",
+    "Absolute thresholds flag design-methodology concerns even when no baseline exists.",
+    "Default check-in behavior is advisory; use --fail-on-red for CI blocking."
+  ]
+}
